@@ -1,0 +1,587 @@
+/*
+ * Tema do app sobre o Bootstrap 5.
+ *
+ * As cores vêm de js/brand.js como custom properties (--giro-*), então trocar
+ * a identidade não passa por aqui. Este arquivo cuida de layout, da trilha de
+ * etapas e do conforto de preenchimento no celular.
+ */
+
+/* Mesmas famílias do PDF, servidas dos subsets locais — sem CDN de fontes. */
+@font-face {
+  font-family: 'Barlow';
+  src: url('../assets/fonts/Barlow-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow';
+  src: url('../assets/fonts/Barlow-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('../assets/fonts/BarlowCondensed-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --bs-body-font-family: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --bs-body-color: var(--giro-ink, #1F2426);
+  --bs-link-color: var(--giro-band, #22292C);
+  --bs-link-hover-color: var(--giro-accent, #FA8706);
+  --bs-border-color: var(--giro-rule, #C9CDD0);
+
+  --nav-h: 76px;
+}
+
+/*
+ * As utilidades do Bootstrap (d-flex e afins) usam !important e venceriam o
+ * [hidden] do reboot. Este arquivo carrega depois, então a regra abaixo
+ * devolve a palavra final ao atributo.
+ */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  background: #F4F6F8;
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+}
+
+/* ---- botões -------------------------------------------------------------
+ * O Bootstrap 5.3 pinta os botões por --bs-btn-*, não por --bs-primary; sem
+ * redefinir essas variáveis, .btn-primary continuaria no azul padrão.
+ */
+
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--giro-band, #22292C);
+  --bs-btn-border-color: var(--giro-band, #22292C);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: color-mix(in srgb, var(--giro-band, #22292C) 82%, #fff);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--giro-band, #22292C) 82%, #fff);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: color-mix(in srgb, var(--giro-band, #22292C) 70%, #fff);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--giro-band, #22292C) 70%, #fff);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--giro-band, #22292C);
+  --bs-btn-disabled-border-color: var(--giro-band, #22292C);
+  --bs-btn-focus-shadow-rgb: 250, 135, 6;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--giro-band, #22292C);
+  --bs-btn-border-color: var(--giro-band, #22292C);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--giro-band, #22292C);
+  --bs-btn-hover-border-color: var(--giro-band, #22292C);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--giro-band, #22292C);
+  --bs-btn-active-border-color: var(--giro-band, #22292C);
+  --bs-btn-focus-shadow-rgb: 250, 135, 6;
+}
+
+/* Ação final do fluxo: o laranja da marca, com texto escuro para contraste. */
+.btn-acento {
+  --bs-btn-color: var(--giro-accentText, #1F2426);
+  --bs-btn-bg: var(--giro-accent, #FA8706);
+  --bs-btn-border-color: var(--giro-accent, #FA8706);
+  --bs-btn-hover-color: var(--giro-accentText, #1F2426);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--giro-accent, #FA8706) 88%, #000);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--giro-accent, #FA8706) 88%, #000);
+  --bs-btn-active-color: var(--giro-accentText, #1F2426);
+  --bs-btn-active-bg: color-mix(in srgb, var(--giro-accent, #FA8706) 78%, #000);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--giro-accent, #FA8706) 78%, #000);
+  --bs-btn-disabled-color: var(--giro-accentText, #1F2426);
+  --bs-btn-disabled-bg: var(--giro-accent, #FA8706);
+  --bs-btn-disabled-border-color: var(--giro-accent, #FA8706);
+  --bs-btn-focus-shadow-rgb: 250, 135, 6;
+  font-weight: 600;
+}
+
+.terceiro-toggle {
+  --bs-btn-color: var(--giro-ink, #1F2426);
+  --bs-btn-hover-color: var(--giro-ink, #1F2426);
+}
+
+/* ---- cabeçalho ----------------------------------------------------------
+ * Reproduz a faixa do papel timbrado: fundo claro em degradê, logotipo à
+ * esquerda, título e subtítulo do documento, filete laranja embaixo.
+ */
+
+.cabecalho {
+  background: linear-gradient(180deg, #FCFCFD 0%, #E7E9EB 100%);
+  border-bottom: 4px solid var(--giro-accent, #FA8706);
+  padding-top: env(safe-area-inset-top);
+}
+
+.cabecalho-interno {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding-block: .8rem;
+}
+
+.cabecalho-logo {
+  height: 68px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.cabecalho-nome {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--giro-ink, #1F2426);
+}
+
+.cabecalho-texto {
+  min-width: 0;
+}
+
+.cabecalho-titulo {
+  font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.05rem, 4.2vw, 1.55rem);
+  line-height: 1.05;
+  letter-spacing: .01em;
+  margin: 0;
+  color: var(--giro-ink, #1F2426);
+}
+
+.cabecalho-sub {
+  margin: .2rem 0 0;
+  font-size: clamp(.7rem, 2.2vw, .85rem);
+  line-height: 1.25;
+  color: var(--giro-inkSoft, #5C6569);
+}
+
+.cabecalho-menu {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/*
+ * O menu suspenso nasce com z-index 1000 no Bootstrap e ficaria por baixo da
+ * trilha de etapas (1020) e da barra de navegação (1035). Só o menu é elevado
+ * — subir o cabeçalho inteiro o faria passar por cima da trilha fixa durante a
+ * rolagem. O valor vai na própria .dropdown-menu porque é lá que o Bootstrap
+ * declara --bs-dropdown-zindex; defini-la no ancestral não tem efeito.
+ */
+.cabecalho-menu .dropdown-menu {
+  z-index: 1045;
+}
+
+/* ---- trilha de etapas ---------------------------------------------------- */
+
+.etapas {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: #fff;
+  border-bottom: 1px solid var(--bs-border-color);
+  box-shadow: 0 2px 6px rgba(31, 36, 38, .06);
+}
+
+.etapas-lista {
+  display: flex;
+  gap: .35rem;
+  list-style: none;
+  margin: 0;
+  padding: .6rem 0 .4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.etapas-lista::-webkit-scrollbar {
+  display: none;
+}
+
+.etapa-item {
+  flex: 0 0 auto;
+}
+
+.etapa-botao {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 42px;
+  padding: .25rem .8rem .25rem .3rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--giro-inkSoft, #5C6569);
+  font-size: .82rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.etapa-num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #E9ECEE;
+  color: var(--giro-inkSoft, #5C6569);
+  font-weight: 700;
+  font-size: .8rem;
+}
+
+.etapa-item.atual .etapa-botao {
+  border-color: var(--giro-accent, #FA8706);
+  background: color-mix(in srgb, var(--giro-accent, #FA8706) 12%, #fff);
+  color: var(--giro-ink, #1F2426);
+  font-weight: 600;
+}
+
+.etapa-item.atual .etapa-num {
+  background: var(--giro-accent, #FA8706);
+  color: #fff;
+}
+
+.etapa-item.concluida .etapa-botao {
+  color: var(--giro-ink, #1F2426);
+}
+
+.etapa-item.concluida .etapa-num {
+  background: var(--giro-band, #22292C);
+  color: #fff;
+  font-size: 0;
+}
+
+.etapa-item.concluida .etapa-num::after {
+  content: '\2713';
+  font-size: .85rem;
+}
+
+.rotulo-etapa {
+  margin: 0 0 .5rem;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--giro-inkSoft, #5C6569);
+}
+
+.barra-navegacao {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1035;
+  background: #fff;
+  border-top: 1px solid var(--bs-border-color);
+  padding: .6rem 0 calc(.6rem + env(safe-area-inset-bottom));
+}
+
+/* ---- formulário ---------------------------------------------------------- */
+
+/* A trilha de etapas é grudada no topo; sem este respiro o título da etapa
+   encosta nela ao rolar. */
+.etapa {
+  padding-top: 1.75rem;
+}
+
+.card-etapa {
+  border-color: var(--bs-border-color);
+}
+
+/* 16px é o mínimo que evita o zoom automático do iOS ao focar um campo. */
+.form-control,
+.form-select {
+  font-size: 16px;
+  min-height: 46px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--giro-accent, #FA8706);
+  box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--giro-accent, #FA8706) 25%, transparent);
+}
+
+textarea.form-control {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.form-label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--giro-inkSoft, #5C6569);
+  margin-bottom: .25rem;
+}
+
+.btn-lg,
+label.btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---- retrato (foto 3x4) -------------------------------------------------- */
+
+.retrato {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.retrato-preview {
+  width: 108px;
+  height: 144px;
+  flex: 0 0 auto;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .375rem;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.retrato-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.retrato-vazio {
+  font-size: .8rem;
+  color: var(--giro-inkSoft, #5C6569);
+}
+
+.retrato-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+/* ---- título de etapa -----------------------------------------------------
+ * Mesma voz das faixas do PDF: condensada, em caixa alta, com o filete
+ * laranja embaixo. É o que diz de relance em que parte do laudo se está.
+ */
+
+.etapa-cabecalho {
+  margin-bottom: 1.25rem;
+}
+
+.etapa-titulo {
+  font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.8rem, 7.5vw, 2.6rem);
+  line-height: 1.02;
+  letter-spacing: .015em;
+  text-transform: uppercase;
+  color: var(--giro-ink, #1F2426);
+  margin: 0;
+}
+
+.etapa-titulo::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: .5rem;
+  border-radius: 2px;
+  background: var(--giro-accent, #FA8706);
+}
+
+.etapa-apoio {
+  margin: .7rem 0 0;
+  max-width: 62ch;
+  color: var(--giro-inkSoft, #5C6569);
+}
+
+/* ---- caixa de colar ------------------------------------------------------ */
+
+/*
+ * O atalho de preenchimento é a primeira coisa que ela usa em cada pessoa,
+ * então é destacado com o laranja da marca em vez de parecer mais um campo.
+ */
+.colar-destaque {
+  border-color: color-mix(in srgb, var(--giro-accent, #FA8706) 45%, #fff);
+  border-left: 4px solid var(--giro-accent, #FA8706);
+  background: color-mix(in srgb, var(--giro-accent, #FA8706) 6%, #fff);
+}
+
+/* Dentro do cartão de terceiro não há moldura de card: ela é desenhada aqui. */
+.colar-destaque-embutido {
+  border: 1px solid color-mix(in srgb, var(--giro-accent, #FA8706) 45%, #fff);
+  border-left: 4px solid var(--giro-accent, #FA8706);
+  border-radius: .5rem;
+  padding: .9rem 1rem;
+}
+
+.colar-titulo {
+  font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.1;
+  letter-spacing: .01em;
+  text-transform: uppercase;
+  color: var(--giro-ink, #1F2426);
+  margin: 0 0 .35rem;
+}
+
+.colar-texto {
+  font-size: .875rem;
+  /* Monoespaçada: o texto do Detran vem em colunas e fica legível alinhado. */
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ---- galeria de fotos ---------------------------------------------------- */
+
+/*
+ * Galeria embutida num campo (descrição do fato): um filete acima separa as
+ * fotos do texto a que pertencem, sem abrir outro cartão dentro do cartão.
+ */
+.galeria-embutida {
+  border-top: 1px solid var(--bs-border-color);
+  padding-top: .75rem;
+}
+
+.foto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: .5rem;
+}
+
+.foto-item {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: .375rem;
+  overflow: hidden;
+  border: 1px solid var(--bs-border-color);
+  background: #fff;
+  cursor: grab;
+}
+
+.foto-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.foto-item.arrastando {
+  opacity: .4;
+}
+
+.foto-acoes {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, .88);
+}
+
+.foto-acoes .btn {
+  flex: 1 1 0;
+  padding: .15rem 0;
+  line-height: 1.1;
+  border: 0;
+  background: transparent;
+}
+
+/* ---- terceiros ----------------------------------------------------------- */
+
+.terceiro .card-header {
+  background: #fff;
+}
+
+/* O botão é item de um flex container: o cursor precisa ser item flex também,
+   senão o float não encontra contexto e o triângulo flutua solto. */
+.terceiro-toggle {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.terceiro-toggle > span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.terceiro-toggle::after {
+  content: '\25B8';
+  flex: 0 0 auto;
+  color: var(--giro-inkSoft, #5C6569);
+  transition: transform .15s ease;
+}
+
+.terceiro-toggle[aria-expanded="true"]::after {
+  transform: rotate(90deg);
+}
+
+/* ---- resumo -------------------------------------------------------------- */
+
+.resumo {
+  margin: 0;
+}
+
+.resumo-linha {
+  display: flex;
+  gap: 1rem;
+  padding: .45rem 0;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.resumo-linha:last-child {
+  border-bottom: 0;
+}
+
+.resumo dt {
+  flex: 0 0 42%;
+  font-weight: 600;
+  color: var(--giro-inkSoft, #5C6569);
+}
+
+.resumo dd {
+  margin: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+/* ---- prévia -------------------------------------------------------------- */
+
+#framePreview {
+  width: 100%;
+  height: 100%;
+  min-height: 70vh;
+  border: 0;
+}
+
+/* ---- telas estreitas ----------------------------------------------------- */
+
+@media (max-width: 575.98px) {
+  .cabecalho-logo {
+    height: 54px;
+  }
+  .retrato-botoes {
+    flex-direction: column;
+    flex: 1 1 100%;
+  }
+  .retrato-botoes .btn {
+    width: 100%;
+  }
+  .barra-navegacao .btn {
+    padding-inline: .75rem;
+  }
+}
+
+@media print {
+  .cabecalho-menu,
+  .etapas,
+  .barra-navegacao {
+    display: none;
+  }
+}

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="pt-BR" data-bs-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<!--
+  Trava de saída de dados: connect-src impede fetch, XHR, WebSocket e beacon
+  para qualquer origem que não seja a própria página; form-action e base-uri
+  fecham os outros caminhos de envio. Os arquivos do CDN continuam a carregar,
+  agora conferidos por integrity — um byte diferente e o navegador recusa.
+-->
+<meta http-equiv="Content-Security-Policy"
+      content="connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Formulário para emissão do Laudo de Vistoria em PDF. Processamento local, sem envio de dados.">
+<title>Laudo de Vistoria</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link href="css/giro.css" rel="stylesheet">
+</head>
+<body>
+
+<header class="cabecalho">
+  <div class="container-xl cabecalho-interno">
+    <img class="cabecalho-logo" id="cabecalhoLogo" src="assets/logo.png" alt="GIRO Pronta Reação">
+    <div class="cabecalho-texto">
+      <h1 class="cabecalho-titulo" id="cabecalhoTitulo">LAUDO DE VISTORIA</h1>
+      <p class="cabecalho-sub" id="cabecalhoSub">Verificação e Constatação das Condições do Local</p>
+    </div>
+    <div class="dropdown cabecalho-menu">
+      <button class="btn btn-sm btn-outline-dark" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu">&#9776;</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><button class="dropdown-item" type="button" id="btnNovoLaudo">Novo laudo</button></li>
+        <li><button class="dropdown-item text-danger" type="button" id="btnApagarRascunho">Apagar rascunho deste aparelho</button></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="container-xl">
+  <div class="alert alert-info alert-dismissible d-flex flex-wrap gap-2 align-items-center mt-3" id="avisoRascunho" hidden>
+    <span id="avisoRascunhoTexto" class="me-auto"></span>
+    <button type="button" class="btn btn-sm btn-outline-dark" id="btnDescartarRascunho">Descartar</button>
+  </div>
+
+  <div class="alert alert-warning d-flex flex-wrap gap-2 align-items-center mt-3" id="avisoExpiracao" hidden>
+    <span id="avisoExpiracaoTexto" class="me-auto"></span>
+    <button type="button" class="btn btn-sm btn-dark" id="btnContinuarPreenchendo">Continuar preenchendo</button>
+  </div>
+</div>
+
+<nav class="etapas" aria-label="Etapas do preenchimento">
+  <div class="container-xl">
+    <ol class="etapas-lista" id="etapasLista"></ol>
+    <p class="rotulo-etapa" id="rotuloEtapa"></p>
+  </div>
+</nav>
+
+<main class="container-xl pb-5" id="appPrincipal">
+
+  <!-- 1 -->
+  <section class="etapa" data-etapa="1" data-titulo="Associado / condutor" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Associado / condutor</h2>
+    </header>
+    <div class="card card-etapa colar-destaque mb-3"><div class="card-body">
+      <h3 class="colar-titulo">Cole aqui mensagem de WhatsApp do condutor</h3>
+      <div id="colarAssociado"></div>
+    </div></div>
+    <div class="card card-etapa mb-3"><div class="card-body">
+      <h3 class="h6">Foto do condutor</h3>
+      <div class="retrato" data-foto="associado.fotoId">
+  <div class="retrato-preview"></div>
+  <div class="retrato-botoes">
+    <label class="btn btn-primary mb-0">Tirar foto<input type="file" accept="image/*" capture="user" hidden></label>
+    <label class="btn btn-outline-secondary mb-0">Galeria<input type="file" accept="image/*" hidden></label>
+    <button type="button" class="btn btn-outline-danger retrato-remover" hidden>Remover</button>
+  </div>
+  <p class="form-text mb-0">Retrato 3×4. Aparece ao lado dos dados na primeira página do laudo.</p>
+</div>
+    </div></div>
+    <div class="card card-etapa"><div class="card-body">
+      <h3 class="h6 mb-3">Dados</h3>
+      <div class="row g-3">
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-nome">Nome</label>
+  <input class="form-control" id="f-associado-nome" data-path="associado.nome" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-mae">Mãe</label>
+  <input class="form-control" id="f-associado-mae" data-path="associado.mae" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-rg">RG</label>
+  <input class="form-control" id="f-associado-rg" data-path="associado.rg" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-cpf">CPF</label>
+  <input class="form-control" id="f-associado-cpf" data-path="associado.cpf" type="text" inputmode="numeric" data-mask="cpf" placeholder="000.000.000-00" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-nascimento">Data de nascimento</label>
+  <input class="form-control" id="f-associado-nascimento" data-path="associado.nascimento" type="date" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-categoria">Categoria da CNH</label>
+    <div class="campo-opcoes" data-path="associado.categoria">
+      <select class="form-select" id="f-associado-categoria"><option value="">—</option><option value="ACC">ACC</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="AB">AB</option><option value="AC">AC</option><option value="AD">AD</option><option value="AE">AE</option></select>
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-cnh">CNH</label>
+  <input class="form-control" id="f-associado-cnh" data-path="associado.cnh" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-validade">Validade da CNH</label>
+  <input class="form-control" id="f-associado-validade" data-path="associado.validade" type="date" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-renach">Renach</label>
+  <input class="form-control" id="f-associado-renach" data-path="associado.renach" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-associado-observacao">Observação</label>
+  <input class="form-control" id="f-associado-observacao" data-path="associado.observacao" type="text" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="etapa" data-etapa="2" data-titulo="Veículo do associado" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Veículo do associado</h2>
+    </header>
+    <div class="card card-etapa"><div class="card-body">
+      <div class="row g-3">
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-placa">Placa</label>
+  <input class="form-control" id="f-veiculo-placa" data-path="veiculo.placa" type="text" autocapitalize="characters" data-mask="placa" placeholder="ABC1D23" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-proprietario">Proprietário</label>
+  <input class="form-control" id="f-veiculo-proprietario" data-path="veiculo.proprietario" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-cpf">CPF do proprietário</label>
+  <input class="form-control" id="f-veiculo-cpf" data-path="veiculo.cpf" type="text" inputmode="numeric" data-mask="cpf" placeholder="000.000.000-00" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-marca">Marca / modelo</label>
+  <input class="form-control" id="f-veiculo-marca" data-path="veiculo.marca" type="text" autocapitalize="characters" placeholder="FORD/ECOSPORT TIT AT 2.0" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-renavam">Renavam</label>
+  <input class="form-control" id="f-veiculo-renavam" data-path="veiculo.renavam" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-furto">Furto / restrições</label>
+  <input class="form-control" id="f-veiculo-furto" data-path="veiculo.furto" type="text" placeholder="Normal" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-chassi">Chassi</label>
+  <input class="form-control" id="f-veiculo-chassi" data-path="veiculo.chassi" type="text" autocapitalize="characters" data-mask="chassi" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-combustivel">Combustível</label>
+    <div class="campo-opcoes" data-path="veiculo.combustivel">
+      <select class="form-select" id="f-veiculo-combustivel"><option value="">—</option><option value="Álcool">Álcool</option><option value="Gasolina">Gasolina</option><option value="Álcool/Gasolina">Álcool/Gasolina</option><option value="Diesel">Diesel</option><option value="Gás Natural (GNV)">Gás Natural (GNV)</option><option value="Gasolina/GNV">Gasolina/GNV</option><option value="Álcool/Gasolina/GNV">Álcool/Gasolina/GNV</option><option value="Diesel/GNV">Diesel/GNV</option><option value="Elétrico">Elétrico</option><option value="Gasolina/Elétrico">Gasolina/Elétrico</option><option value="Álcool/Gasolina/Elétrico">Álcool/Gasolina/Elétrico</option><option value="Diesel/Elétrico">Diesel/Elétrico</option><option value="Hidrogênio">Hidrogênio</option><option value="__outro">Outro…</option></select>
+      <input class="form-control mt-2 campo-outro" type="text" placeholder="Especifique" hidden autocomplete="off" aria-label="Combustível (outro)">
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-anoFabModelo">Ano de fabricação / modelo</label>
+  <input class="form-control" id="f-veiculo-anoFabModelo" data-path="veiculo.anoFabModelo" type="text" inputmode="numeric" placeholder="2014/2014" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-cor">Cor</label>
+  <input class="form-control" id="f-veiculo-cor" data-path="veiculo.cor" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-tipo">Tipo</label>
+    <div class="campo-opcoes" data-path="veiculo.tipo">
+      <select class="form-select" id="f-veiculo-tipo"><option value="">—</option><option value="Automóvel">Automóvel</option><option value="Caminhão">Caminhão</option><option value="Caminhão Trator">Caminhão Trator</option><option value="Caminhonete">Caminhonete</option><option value="Camioneta">Camioneta</option><option value="Chassi Plataforma">Chassi Plataforma</option><option value="Ciclomotor">Ciclomotor</option><option value="Micro-ônibus">Micro-ônibus</option><option value="Motocicleta">Motocicleta</option><option value="Motoneta">Motoneta</option><option value="Ônibus">Ônibus</option><option value="Quadriciclo">Quadriciclo</option><option value="Reboque">Reboque</option><option value="Semirreboque">Semirreboque</option><option value="Side-car">Side-car</option><option value="Trator de Esteiras">Trator de Esteiras</option><option value="Trator de Rodas">Trator de Rodas</option><option value="Trator Misto">Trator Misto</option><option value="Triciclo">Triciclo</option><option value="Utilitário">Utilitário</option><option value="__outro">Outro…</option></select>
+      <input class="form-control mt-2 campo-outro" type="text" placeholder="Especifique" hidden autocomplete="off" aria-label="Tipo (outro)">
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-municipio">Município</label>
+  <input class="form-control" id="f-veiculo-municipio" data-path="veiculo.municipio" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-especie">Espécie</label>
+  <input class="form-control" id="f-veiculo-especie" data-path="veiculo.especie" type="text" autocapitalize="words" placeholder="Misto" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-categoria">Categoria</label>
+    <div class="campo-opcoes" data-path="veiculo.categoria">
+      <select class="form-select" id="f-veiculo-categoria"><option value="">—</option><option value="Particular">Particular</option><option value="Aluguel">Aluguel</option><option value="Oficial">Oficial</option><option value="Experiência">Experiência</option><option value="Aprendizagem">Aprendizagem</option><option value="Missão Diplomática/Consular">Missão Diplomática/Consular</option><option value="__outro">Outro…</option></select>
+      <input class="form-control mt-2 campo-outro" type="text" placeholder="Especifique" hidden autocomplete="off" aria-label="Categoria (outro)">
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-motor">Nº do motor</label>
+  <input class="form-control" id="f-veiculo-motor" data-path="veiculo.motor" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12">
+  <label class="form-label" for="f-veiculo-endereco">Endereço</label>
+  <textarea class="form-control" id="f-veiculo-endereco" data-path="veiculo.endereco" rows="2" autocomplete="off"></textarea>
+</div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="etapa" data-etapa="3" data-titulo="Boletim de ocorrência" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Boletim de ocorrência</h2>
+    </header>
+    <div class="card card-etapa"><div class="card-body">
+      <div class="row g-3">
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-bo-numero">Número do B.O.</label>
+  <input class="form-control" id="f-bo-numero" data-path="bo.numero" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="f-bo-emitidoEm">Emitido em</label>
+          <input class="form-control" id="f-bo-emitidoEm" data-path="bo.emitidoEm" type="datetime-local" autocomplete="off">
+        </div>
+<div class="col-12">
+  <label class="form-label" for="f-bo-relato">Relato conforme o boletim</label>
+  <textarea class="form-control" id="f-bo-relato" data-path="bo.relato" rows="8" placeholder="Transcreva aqui o relato registrado no B.O." autocomplete="off"></textarea>
+</div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="etapa" data-etapa="4" data-titulo="Terceiros" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Terceiros envolvidos</h2>
+      <p class="etapa-apoio">Adicione um cartão por terceiro. O laudo funciona normalmente sem nenhum.</p>
+    </header>
+    <p class="alert alert-light border" id="semTerceiros">Nenhum terceiro adicionado. As seções de terceiro não aparecerão no PDF.</p>
+    <div id="listaTerceiros"></div>
+    <button type="button" class="btn btn-outline-primary btn-lg w-100" id="btnAddTerceiro">+ Adicionar terceiro</button>
+  </section>
+
+  <!-- 5 -->
+  <section class="etapa" data-etapa="5" data-titulo="Fotos dos veículos" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Fotos dos veículos</h2>
+      <p class="etapa-apoio">Cada foto ocupa uma página inteira do PDF, na ordem definida aqui.</p>
+    </header>
+    <div id="galerias"></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="etapa" data-etapa="6" data-titulo="Parecer técnico" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Parecer técnico</h2>
+    </header>
+    <div class="card card-etapa"><div class="card-body">
+      <div class="row g-3">
+<div class="col-12">
+  <label class="form-label" for="f-parecer-descricao">Descrição do fato</label>
+  <textarea class="form-control" id="f-parecer-descricao" data-path="parecer.descricao" rows="10" autocomplete="off"></textarea>
+  <div class="galeria-embutida mt-3">
+    <h3 class="h6 mb-1">Fotos da descrição do fato</h3>
+    <div id="galeriaParecer"></div>
+  </div>
+</div>
+<div class="col-12">
+  <label class="form-label" for="f-parecer-observacao">Observação</label>
+  <textarea class="form-control" id="f-parecer-observacao" data-path="parecer.observacao" rows="8" autocomplete="off"></textarea>
+</div>
+<div class="col-12">
+  <label class="form-label" for="f-parecer-ctb">Código de Trânsito Brasileiro</label>
+  <textarea class="form-control" id="f-parecer-ctb" data-path="parecer.ctb" rows="8" autocomplete="off"></textarea>
+</div>
+<div class="col-12">
+  <label class="form-label" for="f-parecer-conclusao">Conclusão</label>
+  <textarea class="form-control" id="f-parecer-conclusao" data-path="parecer.conclusao" rows="10" autocomplete="off"></textarea>
+</div>
+      </div>
+      <p class="form-text mt-3 mb-0">Deixe uma linha em branco entre parágrafos — cada bloco vira um parágrafo justificado no PDF.</p>
+    </div></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="etapa" data-etapa="7" data-titulo="Revisão e geração" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Revisão</h2>
+    </header>
+    <div class="alert alert-warning" id="pendencias" hidden></div>
+    <div class="card card-etapa mb-3"><div class="card-body">
+      <dl class="resumo mb-0" id="resumoRevisao"></dl>
+    </div></div>
+    <div class="d-grid gap-2 d-sm-flex">
+      <button type="button" class="btn btn-outline-secondary btn-lg flex-fill" id="btnPreview">Pré-visualizar</button>
+    </div>
+    <p class="form-text mt-3">
+      Os dados ficam guardados apenas neste aparelho e são apagados assim que o PDF é gerado.
+      Um rascunho não tocado por 1 hora também é apagado sozinho.
+    </p>
+  </section>
+
+</main>
+
+<section class="container-xl py-5" id="telaConcluido" hidden>
+  <div class="text-center">
+    <h2 class="h3">PDF gerado</h2>
+    <p class="lead mb-1">O arquivo foi baixado para este aparelho:</p>
+    <p class="fw-semibold" id="nomeArquivoGerado"></p>
+    <p class="text-secondary">Os dados do laudo foram apagados deste navegador.</p>
+    <button type="button" class="btn btn-primary btn-lg mt-2" id="btnComecarNovo">Começar novo laudo</button>
+  </div>
+</section>
+
+<nav class="barra-navegacao" id="barraNavegacao">
+  <div class="container-xl d-flex gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-lg" id="btnVoltar">Voltar</button>
+    <button type="button" class="btn btn-acento btn-lg flex-fill" id="btnContinuar">Continuar</button>
+    <button type="button" class="btn btn-acento btn-lg flex-fill" id="btnGerar" hidden>Gerar PDF</button>
+  </div>
+</nav>
+
+<!-- Modal: confirmação -->
+<div class="modal fade" id="modalConfirmar" tabindex="-1" aria-labelledby="tituloConfirmar" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tituloConfirmar">Confirmar emissão do laudo</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="resumo">
+          <div class="resumo-linha"><dt>Terceiros</dt><dd id="confTerceiros"></dd></div>
+          <div class="resumo-linha"><dt>Fotos de veículo</dt><dd id="confFotos"></dd></div>
+          <div class="resumo-linha"><dt>Arquivo</dt><dd id="confArquivo"></dd></div>
+        </dl>
+        <div class="alert alert-warning" id="confPendencias" hidden></div>
+        <p class="mb-0">Ao confirmar, o PDF é baixado e <strong>todos os dados são apagados deste aparelho</strong>.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-acento" id="btnConfirmarGerar">Confirmar e gerar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: prévia -->
+<div class="modal fade" id="modalPreview" tabindex="-1" aria-labelledby="tituloPreview" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tituloPreview">Prévia do laudo</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="framePreview" title="Prévia do PDF" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cartão de terceiro (clonado por JS; os data-path são relativos) -->
+<template id="tplTerceiro">
+  <section class="terceiro card card-etapa mb-3">
+    <div class="card-header d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-sm btn-link p-0 terceiro-toggle text-decoration-none flex-fill text-start">
+        <span class="terceiro-titulo fw-semibold"></span>
+        <span class="terceiro-resumo d-block small text-secondary"></span>
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-danger terceiro-remover">Remover</button>
+    </div>
+    <div class="card-body terceiro-corpo">
+      <div class="colar-destaque colar-destaque-embutido">
+        <h4 class="colar-titulo">Cole aqui mensagem de WhatsApp do condutor</h4>
+        <div class="colar-host"></div>
+      </div>
+      <hr>
+      <h4 class="h6">Foto do terceiro</h4>
+      <div class="retrato" data-foto="dados.fotoId">
+  <div class="retrato-preview"></div>
+  <div class="retrato-botoes">
+    <label class="btn btn-primary mb-0">Tirar foto<input type="file" accept="image/*" capture="user" hidden></label>
+    <label class="btn btn-outline-secondary mb-0">Galeria<input type="file" accept="image/*" hidden></label>
+    <button type="button" class="btn btn-outline-danger retrato-remover" hidden>Remover</button>
+  </div>
+  <p class="form-text mb-0">Retrato 3×4, opcional.</p>
+</div>
+      <hr>
+      <h4 class="h6 mb-3">Dados do terceiro</h4>
+      <div class="row g-3">
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-nome">Nome</label>
+  <input class="form-control" id="f-dados-nome" data-path="dados.nome" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-mae">Mãe</label>
+  <input class="form-control" id="f-dados-mae" data-path="dados.mae" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-rg">RG</label>
+  <input class="form-control" id="f-dados-rg" data-path="dados.rg" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-cpf">CPF</label>
+  <input class="form-control" id="f-dados-cpf" data-path="dados.cpf" type="text" inputmode="numeric" data-mask="cpf" placeholder="000.000.000-00" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-nascimento">Data de nascimento</label>
+  <input class="form-control" id="f-dados-nascimento" data-path="dados.nascimento" type="date" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-categoria">Categoria da CNH</label>
+    <div class="campo-opcoes" data-path="dados.categoria">
+      <select class="form-select" id="f-dados-categoria"><option value="">—</option><option value="ACC">ACC</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="AB">AB</option><option value="AC">AC</option><option value="AD">AD</option><option value="AE">AE</option></select>
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-cnh">CNH</label>
+  <input class="form-control" id="f-dados-cnh" data-path="dados.cnh" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-validade">Validade da CNH</label>
+  <input class="form-control" id="f-dados-validade" data-path="dados.validade" type="date" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-renach">Renach</label>
+  <input class="form-control" id="f-dados-renach" data-path="dados.renach" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-dados-observacao">Observação</label>
+  <input class="form-control" id="f-dados-observacao" data-path="dados.observacao" type="text" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+      </div>
+      <hr class="my-4">
+      <h4 class="h6 mb-3">Veículo do terceiro</h4>
+      <div class="row g-3">
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-placa">Placa</label>
+  <input class="form-control" id="f-veiculo-placa" data-path="veiculo.placa" type="text" autocapitalize="characters" data-mask="placa" placeholder="ABC1D23" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-proprietario">Proprietário</label>
+  <input class="form-control" id="f-veiculo-proprietario" data-path="veiculo.proprietario" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-cpf">CPF do proprietário</label>
+  <input class="form-control" id="f-veiculo-cpf" data-path="veiculo.cpf" type="text" inputmode="numeric" data-mask="cpf" placeholder="000.000.000-00" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-marca">Marca / modelo</label>
+  <input class="form-control" id="f-veiculo-marca" data-path="veiculo.marca" type="text" autocapitalize="characters" placeholder="FORD/ECOSPORT TIT AT 2.0" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-renavam">Renavam</label>
+  <input class="form-control" id="f-veiculo-renavam" data-path="veiculo.renavam" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-furto">Furto / restrições</label>
+  <input class="form-control" id="f-veiculo-furto" data-path="veiculo.furto" type="text" placeholder="Normal" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-chassi">Chassi</label>
+  <input class="form-control" id="f-veiculo-chassi" data-path="veiculo.chassi" type="text" autocapitalize="characters" data-mask="chassi" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-combustivel">Combustível</label>
+    <div class="campo-opcoes" data-path="veiculo.combustivel">
+      <select class="form-select" id="f-veiculo-combustivel"><option value="">—</option><option value="Álcool">Álcool</option><option value="Gasolina">Gasolina</option><option value="Álcool/Gasolina">Álcool/Gasolina</option><option value="Diesel">Diesel</option><option value="Gás Natural (GNV)">Gás Natural (GNV)</option><option value="Gasolina/GNV">Gasolina/GNV</option><option value="Álcool/Gasolina/GNV">Álcool/Gasolina/GNV</option><option value="Diesel/GNV">Diesel/GNV</option><option value="Elétrico">Elétrico</option><option value="Gasolina/Elétrico">Gasolina/Elétrico</option><option value="Álcool/Gasolina/Elétrico">Álcool/Gasolina/Elétrico</option><option value="Diesel/Elétrico">Diesel/Elétrico</option><option value="Hidrogênio">Hidrogênio</option><option value="__outro">Outro…</option></select>
+      <input class="form-control mt-2 campo-outro" type="text" placeholder="Especifique" hidden autocomplete="off" aria-label="Combustível (outro)">
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-anoFabModelo">Ano de fabricação / modelo</label>
+  <input class="form-control" id="f-veiculo-anoFabModelo" data-path="veiculo.anoFabModelo" type="text" inputmode="numeric" placeholder="2014/2014" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-cor">Cor</label>
+  <input class="form-control" id="f-veiculo-cor" data-path="veiculo.cor" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-tipo">Tipo</label>
+    <div class="campo-opcoes" data-path="veiculo.tipo">
+      <select class="form-select" id="f-veiculo-tipo"><option value="">—</option><option value="Automóvel">Automóvel</option><option value="Caminhão">Caminhão</option><option value="Caminhão Trator">Caminhão Trator</option><option value="Caminhonete">Caminhonete</option><option value="Camioneta">Camioneta</option><option value="Chassi Plataforma">Chassi Plataforma</option><option value="Ciclomotor">Ciclomotor</option><option value="Micro-ônibus">Micro-ônibus</option><option value="Motocicleta">Motocicleta</option><option value="Motoneta">Motoneta</option><option value="Ônibus">Ônibus</option><option value="Quadriciclo">Quadriciclo</option><option value="Reboque">Reboque</option><option value="Semirreboque">Semirreboque</option><option value="Side-car">Side-car</option><option value="Trator de Esteiras">Trator de Esteiras</option><option value="Trator de Rodas">Trator de Rodas</option><option value="Trator Misto">Trator Misto</option><option value="Triciclo">Triciclo</option><option value="Utilitário">Utilitário</option><option value="__outro">Outro…</option></select>
+      <input class="form-control mt-2 campo-outro" type="text" placeholder="Especifique" hidden autocomplete="off" aria-label="Tipo (outro)">
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-municipio">Município</label>
+  <input class="form-control" id="f-veiculo-municipio" data-path="veiculo.municipio" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-especie">Espécie</label>
+  <input class="form-control" id="f-veiculo-especie" data-path="veiculo.especie" type="text" autocapitalize="words" placeholder="Misto" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-categoria">Categoria</label>
+    <div class="campo-opcoes" data-path="veiculo.categoria">
+      <select class="form-select" id="f-veiculo-categoria"><option value="">—</option><option value="Particular">Particular</option><option value="Aluguel">Aluguel</option><option value="Oficial">Oficial</option><option value="Experiência">Experiência</option><option value="Aprendizagem">Aprendizagem</option><option value="Missão Diplomática/Consular">Missão Diplomática/Consular</option><option value="__outro">Outro…</option></select>
+      <input class="form-control mt-2 campo-outro" type="text" placeholder="Especifique" hidden autocomplete="off" aria-label="Categoria (outro)">
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-veiculo-motor">Nº do motor</label>
+  <input class="form-control" id="f-veiculo-motor" data-path="veiculo.motor" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12">
+  <label class="form-label" for="f-veiculo-endereco">Endereço</label>
+  <textarea class="form-control" id="f-veiculo-endereco" data-path="veiculo.endereco" rows="2" autocomplete="off"></textarea>
+</div>
+      </div>
+      <hr class="my-4">
+      <h4 class="h6 mb-3">Relato conforme o terceiro</h4>
+      <div class="row g-3">
+<div class="col-12">
+  <label class="form-label" for="f-relato-texto">Relato</label>
+  <textarea class="form-control" id="f-relato-texto" data-path="relato.texto" rows="8" autocomplete="off"></textarea>
+</div>
+<div class="col-12">
+  <label class="form-label" for="f-relato-origem">Data / origem do relato</label>
+  <input class="form-control" id="f-relato-origem" data-path="relato.origem" type="text" placeholder="Gravação de áudio 07/09/2026" autocomplete="off" spellcheck="false">
+</div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.10/build/pdfmake.min.js"
+        integrity="sha384-vseuUuO/VRMn00lXYd5m/Pk4l/7RjMqhXGf6G0RALy+On0txYb39dQsUQDAd7q5L" crossorigin="anonymous"></script>
+<script src="js/brand.js"></script>
+<script src="js/state.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/photos.js"></script>
+<script src="js/fonts.js"></script>
+<script src="js/colar.js"></script>
+<script src="js/pdfdoc.js"></script>
+<script src="js/form.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
