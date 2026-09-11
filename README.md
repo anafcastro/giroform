@@ -17,6 +17,23 @@ permite pular direto para qualquer uma.
 
 O arquivo é nomeado no padrão do laudo: `PLACA MARCA - PROPRIETÁRIO.pdf`.
 
+### Preencher colando o WhatsApp
+
+Cada etapa de pessoa e de veículo tem uma caixa em destaque no topo. Cole nela a
+mensagem de consulta recebida e os campos abaixo aparecem preenchidos, prontos
+para conferência.
+
+| Onde | O que colar |
+|---|---|
+| Etapa 1, *Associado / condutor* | a mensagem com os dados da pessoa e da CNH |
+| Etapa 2, *Veículo do associado* | a mensagem com os dados do veículo |
+| Cartão de cada terceiro | as duas, cada uma na caixa do seu bloco |
+
+O reconhecimento é por rótulo, não por posição: a ordem não importa e colar uma
+mensagem de cada vez funciona. Colando a mensagem na caixa errada, ela avisa
+onde aquilo deveria entrar em vez de preencher torto. O que não for reconhecido
+aparece listado, para preenchimento à mão.
+
 ### Campos com lista
 
 Quatro campos são escolhidos em lista, não digitados:
@@ -86,12 +103,25 @@ A solução definitiva é publicar em **domínio próprio**, o que isola a orige
 
 ## Publicação
 
-O projeto é HTML/CSS/JS puro — não há build.
+O projeto é HTML/CSS/JS puro — não há build nem etapa de compilação.
 
-1. Faça o commit dos arquivos na branch `main`.
-2. Em *Settings → Pages*, selecione **Deploy from a branch**, branch `main`, pasta `/ (root)`.
+1. `git push` da branch `main`.
+2. Em *Settings → Pages*, escolha **Deploy from a branch**, branch `main`, pasta `/ (root)`.
+3. O endereço sai em `https://<usuário>.github.io/giroform/`.
 
 O arquivo `.nojekyll` na raiz impede o Jekyll de processar o conteúdo.
+
+Sem domínio próprio por enquanto, então **não existe arquivo `CNAME`** — criar um
+sem ter o domínio configurado tira a página do ar. Para adicionar um domínio
+depois, basta apontá-lo em *Settings → Pages*; o GitHub cria o `CNAME` sozinho.
+
+A página funciona em subpasta porque todo caminho do projeto é relativo
+(`assets/…`, `css/…`, `js/…`), inclusive os de dentro do JavaScript. Nenhum
+caminho começa com `/`, e nada precisa saber o endereço final.
+
+O Pages serve tudo por HTTPS, que é o que a câmera do celular e o armazenamento
+local exigem. A política de segurança declarada no `index.html` continua valendo:
+`connect-src 'self'` impede qualquer envio para fora da origem.
 
 ## Identidade visual
 

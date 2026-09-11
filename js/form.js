@@ -304,13 +304,19 @@ window.GIRO = window.GIRO || {};
         el.dataset.foto = base + el.dataset.foto;
       });
 
-      var hostColar = $('.colar-host', no);
-      if (hostColar) {
-        hostColar.appendChild(caixaDeColar(base + 'dados.', base + 'veiculo.', function () {
-          lerParaTela(no);
-          atualizarResumos();
+      [
+        ['.colar-host-pessoa', 'pessoa', 'dados.', 'no bloco do veículo, logo abaixo'],
+        ['.colar-host-veiculo', 'veiculo', 'veiculo.', 'no bloco do condutor, logo acima']
+      ].forEach(function (c) {
+        var hostColar = $(c[0], no);
+        if (!hostColar) { return; }
+        hostColar.appendChild(caixaDeColar({
+          bloco: c[1],
+          base: base + c[2],
+          ondeVaiOResto: c[3],
+          aoPreencher: function () { lerParaTela(no); atualizarResumos(); }
         }));
-      }
+      });
 
       lista.appendChild(no);
       lerParaTela(no);
@@ -570,20 +576,34 @@ window.GIRO = window.GIRO || {};
     return n + ' ' + (n === 1 ? um : varios);
   }
 
+  var ROTULO_BLOCO = {
+    pessoa: { nome: 'do condutor', outro: 'veiculo' },
+    veiculo: { nome: 'do veículo', outro: 'pessoa' }
+  };
+
   /**
-   * Caixa de colar. `basePessoa` e `baseVeiculo` são os prefixos de caminho do
-   * destino — o associado e o veículo dele, ou os de um terceiro.
+   * Caixa de colar. Cada uma cuida de uma metade só: a do condutor fica na
+   * etapa dele e a do veículo na etapa do veículo, para a usuária não ter que
+   * decidir onde colar o quê.
+   *
+   * `opcoes`: bloco ('pessoa' ou 'veiculo'), base (prefixo de caminho do
+   * destino), ondeVaiOResto (texto que aponta a outra caixa) e aoPreencher.
    */
-  function caixaDeColar(basePessoa, baseVeiculo, aoPreencher) {
+  function caixaDeColar(opcoes) {
+    var meu = opcoes.bloco;
+    var outro = ROTULO_BLOCO[meu].outro;
+
     var bloco = document.createElement('div');
     bloco.className = 'colar';
     bloco.innerHTML =
-      '<p class="text-secondary small mb-2">Juntas ou uma de cada vez. ' +
-      'Os campos abaixo são preenchidos e ficam editáveis.</p>' +
+      '<p class="text-secondary small mb-2 colar-sub"></p>' +
       '<textarea class="form-control colar-texto" rows="4" autocomplete="off" spellcheck="false" ' +
-      'aria-label="Mensagens recebidas"></textarea>' +
+      'aria-label="Mensagem recebida"></textarea>' +
       '<button type="button" class="btn btn-primary mt-2 colar-aplicar">Preencher campos</button>' +
       '<p class="colar-aviso small mt-2 mb-0" hidden></p>';
+
+    $('.colar-sub', bloco).textContent =
+      'Os dados ' + ROTULO_BLOCO[meu].nome + ' são preenchidos abaixo e ficam editáveis.';
 
     var texto = $('.colar-texto', bloco);
     var aviso = $('.colar-aviso', bloco);
@@ -596,25 +616,28 @@ window.GIRO = window.GIRO || {};
 
     $('.colar-aplicar', bloco).addEventListener('click', function () {
       if (!texto.value.trim()) {
-        relatar('text-secondary', ['Cole o texto das mensagens antes de preencher.']);
+        relatar('text-secondary', ['Cole o texto da mensagem antes de preencher.']);
         return;
       }
 
       var lido = GIRO.colar.extrair(texto.value);
-      var achados = Object.keys(lido.pessoa).length + Object.keys(lido.veiculo).length;
-      if (!achados) {
-        relatar('text-danger', ['Nenhum campo reconhecido neste texto. Confira se a mensagem foi copiada inteira.']);
+      var meus = lido[meu];
+      var sobra = Object.keys(lido[outro]).length;
+
+      if (!Object.keys(meus).length) {
+        relatar('text-danger', [sobra
+          ? 'Esta mensagem é ' + ROTULO_BLOCO[outro].nome + ', não ' + ROTULO_BLOCO[meu].nome +
+            '. Cole ela ' + opcoes.ondeVaiOResto + '.'
+          : 'Nenhum campo reconhecido neste texto. Confira se a mensagem foi copiada inteira.']);
         return;
       }
 
-      var mudanca = conflitos(basePessoa, lido.pessoa) + conflitos(baseVeiculo, lido.veiculo);
+      var mudanca = conflitos(opcoes.base, meus);
       if (mudanca && !window.confirm(
         frase(mudanca, 'campo já preenchido será substituído', 'campos já preenchidos serão substituídos') +
         '. Continuar?')) { return; }
 
-      var n = aplicarBloco(basePessoa, lido.pessoa) + aplicarBloco(baseVeiculo, lido.veiculo);
-
-      var partes = [frase(n, 'campo preenchido.', 'campos preenchidos.')];
+      var partes = [frase(aplicarBloco(opcoes.base, meus), 'campo preenchido.', 'campos preenchidos.')];
       if (lido.descartados.length) {
         partes.push(frase(lido.descartados.length, 'informação sem campo no laudo:', 'informações sem campo no laudo:') +
           ' ' + escapar(lido.descartados.join(', ')) + '.');
@@ -623,23 +646,40 @@ window.GIRO = window.GIRO || {};
         partes.push('<strong>Não reconhecido, preencha à mão:</strong> ' +
           escapar(lido.desconhecidos.join(', ')) + '.');
       }
-      relatar(lido.desconhecidos.length ? 'text-danger' : 'text-success', partes);
+      // O texto só sai da caixa quando não sobrou nada dele para a outra:
+      // assim ela copia daqui em vez de voltar ao WhatsApp.
+      if (sobra) {
+        partes.push('<strong>' + frase(sobra, 'campo ' + ROTULO_BLOCO[outro].nome + ' ficou de fora',
+          'campos ' + ROTULO_BLOCO[outro].nome + ' ficaram de fora') +
+          '.</strong> Cole este mesmo texto ' + opcoes.ondeVaiOResto + '.');
+      } else {
+        texto.value = '';
+      }
 
-      texto.value = '';
+      relatar(lido.desconhecidos.length ? 'text-danger' : (sobra ? 'text-secondary' : 'text-success'), partes);
       GIRO.app.marcarAlteracao();
-      aoPreencher();
+      opcoes.aoPreencher();
     });
 
     return bloco;
   }
 
+  /** As duas caixas fixas do laudo: o condutor na etapa 1, o veículo na 2. */
   function renderColarAssociado() {
-    var host = $('#colarAssociado');
-    if (!host) { return; }
-    host.innerHTML = '';
-    host.appendChild(caixaDeColar('associado.', 'veiculo.', function () {
-      lerParaTela(document);
-    }));
+    [
+      ['#colarAssociado', 'pessoa', 'associado.', 'na etapa 2, em "Veículo do associado"'],
+      ['#colarVeiculo', 'veiculo', 'veiculo.', 'na etapa 1, em "Associado / condutor"']
+    ].forEach(function (c) {
+      var host = $(c[0]);
+      if (!host) { return; }
+      host.innerHTML = '';
+      host.appendChild(caixaDeColar({
+        bloco: c[1],
+        base: c[2],
+        ondeVaiOResto: c[3],
+        aoPreencher: function () { lerParaTela(document); }
+      }));
+    });
   }
 
   // ---- revisão -------------------------------------------------------------

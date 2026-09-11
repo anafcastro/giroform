@@ -232,7 +232,13 @@ window.GIRO = window.GIRO || {};
     });
 
     if (rgOrgao) { pessoa.rg = [pessoa.rg, rgOrgao].filter(Boolean).join(' '); }
-    if (enderecoPessoa && !veiculo.endereco) { veiculo.endereco = enderecoPessoa; }
+
+    // A reserva do endereço só entra se o mesmo texto trouxer o veículo. Numa
+    // mensagem só de pessoa ela viraria um campo de veículo solto, e a caixa
+    // do condutor mandaria colar na etapa do veículo por causa de um endereço.
+    if (enderecoPessoa && !veiculo.endereco && Object.keys(veiculo).length) {
+      veiculo.endereco = enderecoPessoa;
+    }
 
     return {
       pessoa: pessoa,
