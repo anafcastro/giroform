@@ -151,8 +151,14 @@ bloco escuro do papel timbrado.
 | `assets/icone.png` | recorte quadrado da marca do G, sobre branco | aba do navegador e ícone na tela inicial do celular |
 
 O cabeçalho do PDF é tipográfico: logotipo à esquerda, título do documento à
-direita e um fio fino separando do corpo. O rodapé traz CNPJ, telefones e a
-numeração das páginas.
+direita e um fio fino separando do corpo. Na primeira página ele sai ampliado,
+para a folha de abertura apresentar a empresa e o documento; nas seguintes vem
+compacto. O rodapé traz CNPJ, telefones e a numeração das páginas, e um fio
+vertical de cada lado sugere as margens da folha.
+
+O cabeçalho ampliado é desenhado no `background`, não no `header`: o pdfmake
+monta o cabeçalho dentro de um bloco da altura da margem superior, que não pode
+variar por página, e descarta o que passa disso.
 
 O mesmo logotipo vira a marca d'água ao centro de cada página, convertido para
 cinza no navegador e impresso a 10% de opacidade. A conversão é feita em canvas

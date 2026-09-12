@@ -252,8 +252,11 @@ window.GIRO = window.GIRO || {};
     $('#btnContinuar').hidden = etapaAtual === totalEtapas;
     $('#btnGerar').hidden = etapaAtual !== totalEtapas;
 
-    if (etapaAtual === 5) { renderGalerias(); }
-    if (etapaAtual === totalEtapas) { renderRevisao(); }
+    // Descobre o que a etapa precisa pelo que ela tem dentro, e não pelo
+    // número: a ordem das etapas já mudou uma vez e voltaria a quebrar aqui.
+    var secaoAtual = $('.etapa[data-etapa="' + etapaAtual + '"]');
+    if ($('#galerias', secaoAtual)) { renderGalerias(); }
+    if ($('#resumoRevisao', secaoAtual)) { renderRevisao(); }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -422,8 +425,9 @@ window.GIRO = window.GIRO || {};
   }
 
   /**
-   * Galeria da descrição do fato (etapa 6). Não depende de terceiros nem de
-   * nada que mude durante o preenchimento, então é montada uma única vez.
+   * Galeria da descrição do fato, na etapa do parecer. Não depende de
+   * terceiros nem de nada que mude durante o preenchimento, então é montada
+   * uma única vez.
    */
   function renderGaleriaParecer() {
     var host = $('#galeriaParecer');

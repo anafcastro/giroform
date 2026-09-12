@@ -168,6 +168,9 @@ window.GIRO = window.GIRO || {};
     };
   }
 
+  var RECUO_PARAGRAFO = 24;   // entrada da primeira linha, como em texto corrido
+  var ENTRELINHA = 1.45;
+
   function paragrafos(texto, opcoes) {
     var o = opcoes || {};
     var blocos = String(texto || '').split(/\n{2,}/).filter(function (p) {
@@ -180,8 +183,11 @@ window.GIRO = window.GIRO || {};
         font: 'Carlito',
         fontSize: o.fontSize || 10.5,
         alignment: o.alignment || 'justify',
-        lineHeight: 1.15,
-        margin: [0, 0, 0, 6]
+        // Recuo na primeira linha e entrelinha folgada: o parecer é lido
+        // inteiro, não consultado campo a campo como os blocos de dados.
+        leadingIndent: RECUO_PARAGRAFO,
+        lineHeight: ENTRELINHA,
+        margin: [0, 0, 0, 7]
       };
     });
   }
@@ -233,7 +239,23 @@ window.GIRO = window.GIRO || {};
   }
 
   // ---- cabeçalho e rodapé --------------------------------------------------
+
+  /*
+   * Dois cabeçalhos. O da primeira página é maior, para a folha de abertura
+   * apresentar a empresa e o documento; as seguintes usam o compacto, que não
+   * rouba espaço do conteúdo.
+   *
+   * O grande não pode ir pelo `header`: o pdfmake monta o cabeçalho dentro de
+   * um bloco da altura da margem superior (a mesma em todas as páginas, que
+   * ele não deixa variar) e descarta o que passa disso — foi assim que o fio
+   * da capa desapareceu na primeira tentativa. Então a capa é desenhada no
+   * `background`, que recebe a folha inteira, e o primeiro bloco do laudo
+   * desce por RECUO_CAPA para não encostar nela.
+   */
   var LOGO_LARGURA = 66;
+  var LOGO_LARGURA_CAPA = 118;
+  var RECUO_CAPA = 28;
+  var PROPORCAO_LOGO = 155 / 322;   // usada só quando a arte não pôde ser medida
 
   /** Filete do cabeçalho e do rodapé: um traço laranja curto e o resto em fio fino. */
   function filete(deslocamentoY) {
@@ -258,84 +280,163 @@ window.GIRO = window.GIRO || {};
    * ausente), o nome da empresa entra no lugar do logotipo, em vez de deixar
    * o laudo sem identificação.
    */
-  function cabecalho(temLogo) {
-    return function () {
-      var b = GIRO.brand;
+  /** Par título/subtítulo à direita, nos dois tamanhos. */
+  function tituloDoDocumento(largura, corpo, corpoSub, descida, espacado) {
+    var b = GIRO.brand;
+    return {
+      width: largura,
+      margin: [0, descida, 0, 0],
+      stack: [
+        {
+          text: b.documento.titulo,
+          font: 'BarlowCondensed',
+          bold: true,
+          fontSize: corpo,
+          characterSpacing: espacado ? 1.6 : 1.1,
+          color: C().ink,
+          alignment: 'right'
+        },
+        {
+          text: b.documento.subtitulo,
+          font: 'Carlito',
+          fontSize: corpoSub,
+          color: C().inkSoft,
+          alignment: 'right',
+          margin: [0, espacado ? 2 : 1, 0, 0]
+        }
+      ]
+    };
+  }
 
-      // Referência ao dicionário `images` do documento: o cabeçalho é
-      // reconstruído a cada página e, sem o nome, o pdfmake embutiria uma
-      // cópia do PNG por página.
-      var marca = temLogo
-        ? { width: LOGO_LARGURA, stack: [{ image: 'logo', width: LOGO_LARGURA }] }
-        : {
-            width: 'auto',
-            text: b.nome,
-            font: 'Barlow',
-            bold: true,
-            fontSize: 11.5,
-            characterSpacing: 0.4,
-            color: C().ink,
-            margin: [0, 9, 0, 0]
-          };
+  /**
+   * Coluna da marca. O logotipo vai embrulhado num stack porque, solto numa
+   * coluna, o `width` dele seria lido como largura da coluna. O nome da
+   * empresa entra no lugar quando a arte não carrega, em vez de deixar o laudo
+   * sem identificação.
+   */
+  function colunaDaMarca(temLogo, o) {
+    return temLogo
+      ? { width: o.largura, stack: [{ image: 'logo', width: o.largura }] }
+      : {
+          // Na capa a largura é fixa: posicionado em absoluto, o 'auto' mede
+          // curto demais e empurra a coluna do título para fora da folha.
+          width: o.larguraSemLogo || 'auto',
+          text: GIRO.brand.nome,
+          font: 'Barlow',
+          bold: true,
+          fontSize: o.corpoNome,
+          characterSpacing: 0.4,
+          color: C().ink,
+          margin: [0, o.descidaNome, 0, 0]
+        };
+  }
 
-      return {
-        margin: [MARGENS[0], 30, MARGENS[2], 0],
-        stack: [
-          {
-            columnGap: 14,
-            columns: [
-              marca,
-              {
-                width: '*',
-                margin: [0, 3, 0, 0],
-                stack: [
-                  {
-                    text: b.documento.titulo,
-                    font: 'BarlowCondensed',
-                    bold: true,
-                    fontSize: 13,
-                    characterSpacing: 1.1,
-                    color: C().ink,
-                    alignment: 'right'
-                  },
-                  {
-                    text: b.documento.subtitulo,
-                    font: 'Carlito',
-                    fontSize: 7.5,
-                    color: C().inkSoft,
-                    alignment: 'right',
-                    margin: [0, 1, 0, 0]
-                  }
-                ]
-              }
-            ]
-          },
-          filete(11)
-        ]
-      };
+  /** Centra o título na altura do logotipo. */
+  function descidaDoTitulo(alturaLogo, corpo, corpoSub) {
+    return Math.max(0, (alturaLogo - (corpo * 1.2 + corpoSub * 1.25)) / 2);
+  }
+
+  /** Cabeçalho das páginas 2 em diante, pelo `header` do documento. */
+  function cabecalhoCompacto(logo) {
+    var temLogo = !!logo;
+    var alturaLogo = temLogo ? LOGO_LARGURA * logo.proporcao : 0;
+
+    return {
+      margin: [MARGENS[0], 30, MARGENS[2], 0],
+      stack: [
+        {
+          columnGap: 14,
+          columns: [
+            colunaDaMarca(temLogo, { largura: LOGO_LARGURA, corpoNome: 11.5, descidaNome: 9 }),
+            tituloDoDocumento('*', 13, 7.5, descidaDoTitulo(alturaLogo, 13, 7.5), false)
+          ]
+        },
+        filete(11)
+      ]
+    };
+  }
+
+  /**
+   * Cabeçalho da primeira página, desenhado no fundo. As larguras são
+   * explícitas porque, posicionado em absoluto, o nó não herda a área útil.
+   */
+  function cabecalhoDaCapa(logo) {
+    var temLogo = !!logo;
+    var alturaLogo = LOGO_LARGURA_CAPA * (temLogo ? logo.proporcao : PROPORCAO_LOGO);
+    var larguraTexto = LARGURA_UTIL - LOGO_LARGURA_CAPA - 14;
+
+    return {
+      absolutePosition: { x: MARGENS[0], y: 28 },
+      stack: [
+        {
+          columnGap: 14,
+          columns: [
+            colunaDaMarca(temLogo, {
+              largura: LOGO_LARGURA_CAPA,
+              larguraSemLogo: LOGO_LARGURA_CAPA,
+              corpoNome: 14,
+              descidaNome: 10
+            }),
+            tituloDoDocumento(larguraTexto, 25, 10.5, descidaDoTitulo(alturaLogo, 25, 10.5), true)
+          ]
+        },
+        filete(14)
+      ]
+    };
+  }
+
+  function cabecalho(logo) {
+    return function (pagina) {
+      // A capa é desenhada no fundo; aqui só as páginas seguintes.
+      return pagina === 1 ? null : cabecalhoCompacto(logo);
     };
   }
 
   var MARCA_DAGUA_LARGURA = 340;
+  var BORDA_X = 26;                        // fio lateral, 14 pt fora do texto
+  var BORDA_FOLGA = 26;                    // recuo no topo e no pé
 
   /**
-   * Marca d'água: o logotipo ao centro da folha, em cinza e a 20%. Vai como
-   * `background`, então fica atrás de tudo — inclusive das faixas de título —
-   * e se repete em todas as páginas sem entrar no fluxo do conteúdo.
+   * Fundo de toda página: os fios laterais e a marca d'água.
+   *
+   * Vai como `background`, então fica atrás de tudo — inclusive das faixas de
+   * título — e se repete em todas as páginas sem entrar no fluxo do conteúdo.
+   * Os fios são só a sugestão de uma margem: finos e na cor das bordas de
+   * tabela, para emoldurar sem virar enfeite.
    */
-  function marcaDagua(logo) {
-    if (!logo || !logo.cinza) { return undefined; }
-    var altura = MARCA_DAGUA_LARGURA * logo.proporcao;
-    return function () {
-      return {
-        image: 'marcaDagua',
-        width: MARCA_DAGUA_LARGURA,
-        opacity: 0.1,
-        absolutePosition: {
-          x: (LARGURA_PAGINA - MARCA_DAGUA_LARGURA) / 2,
-          y: (ALTURA_PAGINA - altura) / 2
-        }
-      };
+  function fundo(logo) {
+    var linhas = [
+      {
+        type: 'line',
+        x1: BORDA_X, y1: BORDA_FOLGA, x2: BORDA_X, y2: ALTURA_PAGINA - BORDA_FOLGA,
+        lineWidth: 0.7, lineColor: C().rule
+      },
+      {
+        type: 'line',
+        x1: LARGURA_PAGINA - BORDA_X, y1: BORDA_FOLGA,
+        x2: LARGURA_PAGINA - BORDA_X, y2: ALTURA_PAGINA - BORDA_FOLGA,
+        lineWidth: 0.7, lineColor: C().rule
+      }
+    ];
+
+    var temMarca = !!(logo && logo.cinza);
+    var alturaMarca = MARCA_DAGUA_LARGURA * (temMarca ? logo.proporcao : 0);
+
+    return function (pagina) {
+      var nos = [{ canvas: linhas, absolutePosition: { x: 0, y: 0 } }];
+      if (pagina === 1) { nos.push(cabecalhoDaCapa(logo)); }
+      if (temMarca) {
+        nos.push({
+          image: 'marcaDagua',
+          width: MARCA_DAGUA_LARGURA,
+          opacity: 0.1,
+          absolutePosition: {
+            x: (LARGURA_PAGINA - MARCA_DAGUA_LARGURA) / 2,
+            y: (ALTURA_PAGINA - alturaMarca) / 2
+          }
+        });
+      }
+      return nos;
     };
   }
 
@@ -416,40 +517,71 @@ window.GIRO = window.GIRO || {};
     }
   }
 
+  /** Bytes do arquivo em data URL, sem passar por canvas. */
+  function arquivoEmDataUrl(caminho) {
+    return fetch(caminho)
+      .then(function (r) { return r.ok ? r.blob() : null; })
+      .then(function (blob) {
+        if (!blob) { return null; }
+        return new Promise(function (resolve, reject) {
+          var fr = new FileReader();
+          fr.onload = function () { resolve(fr.result); };
+          fr.onerror = function () { reject(fr.error); };
+          fr.readAsDataURL(blob);
+        });
+      });
+  }
+
   /**
-   * Logotipo em duas versões: a de cor, para o cabeçalho, e a cinza, para a
+   * Logotipo em duas versões: a de cor, para os cabeçalhos, e a cinza, para a
    * marca d'água. A cinza sai da mesma arte em vez de ser um segundo arquivo,
    * para trocar o logotipo continuar mudando tudo de uma vez.
+   *
+   * A de cor vai como os bytes do arquivo, sem canvas no caminho: o
+   * ida-e-volta por `getImageData` mexe nas bordas semitransparentes por causa
+   * do alfa pré-multiplicado, e isso aparece no logotipo ampliado da capa.
    */
   function carregarLogo() {
     if (!GIRO.brand.logo) { return Promise.resolve(null); }
 
-    return new Promise(function (resolve, reject) {
+    var imagem = new Promise(function (resolve, reject) {
       var img = new Image();
       img.onload = function () { resolve(img); };
       img.onerror = function () { reject(new Error('logotipo não carregou')); };
       img.src = GIRO.brand.logo;
-    }).then(function (img) {
-      var largura = img.naturalWidth || img.width;
-      var altura = img.naturalHeight || img.height;
+    });
 
-      var canvas = document.createElement('canvas');
-      canvas.width = largura;
-      canvas.height = altura;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+    return Promise.all([arquivoEmDataUrl(GIRO.brand.logo), imagem])
+      .then(function (r) {
+        var cor = r[0];
+        var img = r[1];
+        if (!cor) { return null; }
 
-      // A versão de cor sai antes: emCinza altera o mesmo canvas.
-      var cor = canvas.toDataURL('image/png');
-      return { cor: cor, cinza: emCinza(ctx, largura, altura), proporcao: altura / largura };
-    }).catch(function () { return null; });
+        var largura = img.naturalWidth || img.width;
+        var altura = img.naturalHeight || img.height;
+
+        var cinza = null;
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = largura;
+          canvas.height = altura;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          cinza = emCinza(ctx, largura, altura);
+        } catch (e) {
+          cinza = null;   // sem marca d'água, mas com laudo
+        }
+
+        return { cor: cor, cinza: cinza, proporcao: altura / largura };
+      })
+      .catch(function () { return null; });
   }
 
   // ---- documento -----------------------------------------------------------
   function montarConteudo(laudo, mapa) {
     var conteudo = [];
 
-    conteudo.push(faixa('DADOS DO ASSOCIADO / CONDUTOR'));
+    conteudo.push(faixa('DADOS DO ASSOCIADO / CONDUTOR', { margin: [0, RECUO_CAPA, 0, 8] }));
     conteudo.push(blocoPessoa(laudo.associado, mapa[laudo.associado.fotoId]));
 
     conteudo.push(faixa('DADOS DO VEÍCULO DO ASSOCIADO'));
@@ -506,7 +638,7 @@ window.GIRO = window.GIRO || {};
       conteudo = conteudo.concat(paragrafos(secao[1]));
 
       if (secao[2] && secao[2].length) {
-        recomecar = blocoFotos('FOTOS - ' + secao[0], secao[2], mapa, conteudo) > 0;
+        recomecar = blocoFotos('DINÂMICA DO ACIDENTE - CROQUI', secao[2], mapa, conteudo) > 0;
       }
     });
 
@@ -540,9 +672,9 @@ window.GIRO = window.GIRO || {};
             author: GIRO.brand.nome
           },
           defaultStyle: { font: 'Carlito', fontSize: 10, color: C().ink },
-          header: cabecalho(!!logo),
+          header: cabecalho(logo),
           footer: rodape,
-          background: marcaDagua(logo),
+          background: fundo(logo),
           content: montarConteudo(laudo, mapa)
         };
         if (Object.keys(imagens).length) { doc.images = imagens; }
