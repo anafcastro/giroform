@@ -10,9 +10,11 @@ window.GIRO = window.GIRO || {};
 (function () {
   'use strict';
 
-  var LARGURA_UTIL = 515.28;              // A4 retrato menos 40 pt de cada lado
+  var LARGURA_PAGINA = 595.28;            // A4 retrato
+  var ALTURA_PAGINA = 841.89;
+  var LARGURA_UTIL = LARGURA_PAGINA - 80;  // menos 40 pt de cada lado
   var MARGENS = [40, 92, 40, 58];
-  var ALTURA_UTIL = 841.89 - MARGENS[1] - MARGENS[3];
+  var ALTURA_UTIL = ALTURA_PAGINA - MARGENS[1] - MARGENS[3];
 
   var C = function () { return GIRO.brand.cores; };
 
@@ -314,6 +316,29 @@ window.GIRO = window.GIRO || {};
     };
   }
 
+  var MARCA_DAGUA_LARGURA = 340;
+
+  /**
+   * Marca d'água: o logotipo ao centro da folha, em cinza e a 20%. Vai como
+   * `background`, então fica atrás de tudo — inclusive das faixas de título —
+   * e se repete em todas as páginas sem entrar no fluxo do conteúdo.
+   */
+  function marcaDagua(logo) {
+    if (!logo || !logo.cinza) { return undefined; }
+    var altura = MARCA_DAGUA_LARGURA * logo.proporcao;
+    return function () {
+      return {
+        image: 'marcaDagua',
+        width: MARCA_DAGUA_LARGURA,
+        opacity: 0.2,
+        absolutePosition: {
+          x: (LARGURA_PAGINA - MARCA_DAGUA_LARGURA) / 2,
+          y: (ALTURA_PAGINA - altura) / 2
+        }
+      };
+    };
+  }
+
   /** Rodapé: o mesmo fio do cabeçalho, contatos da empresa e numeração. */
   function rodape(pagina, total) {
     var b = GIRO.brand;
@@ -324,18 +349,23 @@ window.GIRO = window.GIRO || {};
         {
           columns: [
             {
-              text: 'CNPJ ' + b.cnpj + '  ·  WhatsApp ' + b.whatsapp +
-                    '  ·  Documento confidencial',
+              // A numeração fica com a largura que precisa e os contatos com o
+              // resto: com dois telefones, meia linha não bastava.
+              width: '*',
+              text: ['CNPJ ' + b.cnpj].concat(b.telefones, 'Documento confidencial')
+                .join('  ·  '),
               font: 'Carlito',
               fontSize: 7.5,
               color: C().inkSoft
             },
             {
+              width: 'auto',
               text: 'Página ' + pagina + ' de ' + total,
               font: 'Carlito',
               fontSize: 8,
               color: C().inkSoft,
-              alignment: 'right'
+              alignment: 'right',
+              margin: [8, 0, 0, 0]
             }
           ]
         }
@@ -366,20 +396,53 @@ window.GIRO = window.GIRO || {};
     });
   }
 
+  /** Tons de cinza preservando a transparência do PNG. */
+  function emCinza(ctx, largura, altura) {
+    try {
+      var imagem = ctx.getImageData(0, 0, largura, altura);
+      var px = imagem.data;
+      for (var i = 0; i < px.length; i += 4) {
+        // Luminância perceptual: o laranja da marca cai num cinza médio, e não
+        // no quase branco que a média simples dos canais produziria.
+        var v = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) | 0;
+        px[i] = v;
+        px[i + 1] = v;
+        px[i + 2] = v;
+      }
+      ctx.putImageData(imagem, 0, 0);
+      return ctx.canvas.toDataURL('image/png');
+    } catch (e) {
+      return null;   // um laudo sem marca d'água é melhor do que nenhum laudo
+    }
+  }
+
+  /**
+   * Logotipo em duas versões: a de cor, para o cabeçalho, e a cinza, para a
+   * marca d'água. A cinza sai da mesma arte em vez de ser um segundo arquivo,
+   * para trocar o logotipo continuar mudando tudo de uma vez.
+   */
   function carregarLogo() {
     if (!GIRO.brand.logo) { return Promise.resolve(null); }
-    return fetch(GIRO.brand.logo)
-      .then(function (r) { return r.ok ? r.blob() : null; })
-      .then(function (blob) {
-        if (!blob) { return null; }
-        return new Promise(function (resolve) {
-          var fr = new FileReader();
-          fr.onload = function () { resolve(fr.result); };
-          fr.onerror = function () { resolve(null); };
-          fr.readAsDataURL(blob);
-        });
-      })
-      .catch(function () { return null; });
+
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('logotipo não carregou')); };
+      img.src = GIRO.brand.logo;
+    }).then(function (img) {
+      var largura = img.naturalWidth || img.width;
+      var altura = img.naturalHeight || img.height;
+
+      var canvas = document.createElement('canvas');
+      canvas.width = largura;
+      canvas.height = altura;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      // A versão de cor sai antes: emCinza altera o mesmo canvas.
+      var cor = canvas.toDataURL('image/png');
+      return { cor: cor, cinza: emCinza(ctx, largura, altura), proporcao: altura / largura };
+    }).catch(function () { return null; });
   }
 
   // ---- documento -----------------------------------------------------------
@@ -465,6 +528,10 @@ window.GIRO = window.GIRO || {};
       .then(function (r) {
         var mapa = r[0];
         var logo = r[1];
+        var imagens = {};
+        if (logo) { imagens.logo = logo.cor; }
+        if (logo && logo.cinza) { imagens.marcaDagua = logo.cinza; }
+
         var doc = {
           pageSize: 'A4',
           pageMargins: MARGENS,
@@ -475,9 +542,10 @@ window.GIRO = window.GIRO || {};
           defaultStyle: { font: 'Carlito', fontSize: 10, color: C().ink },
           header: cabecalho(!!logo),
           footer: rodape,
+          background: marcaDagua(logo),
           content: montarConteudo(laudo, mapa)
         };
-        if (logo) { doc.images = { logo: logo }; }
+        if (Object.keys(imagens).length) { doc.images = imagens; }
         return doc;
       });
   }

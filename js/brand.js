@@ -10,8 +10,8 @@ window.GIRO = window.GIRO || {};
 GIRO.brand = {
   // ---- Papel timbrado -----------------------------------------------------
   nome: 'GIRO PRONTA REAÇÃO',
-  cnpj: '00.000.000/0001-00',        // TODO substituir pelo CNPJ real
-  whatsapp: '(00) 00000-0000',       // TODO substituir pelo WhatsApp real
+  cnpj: '39.433.589/0001-57',
+  telefones: ['(62) 99382-9700', '(41) 98704-0154'],
 
   // Logotipo com fundo transparente. Serve à tela e ao cabeçalho de cada
   // página do PDF — a faixa cheia do papel timbrado pesava demais impressa.

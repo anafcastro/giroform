@@ -133,8 +133,8 @@ e lidos pelo gerador do PDF.
 ```js
 GIRO.brand = {
   nome: 'GIRO PRONTA REAÇÃO',
-  cnpj: '00.000.000/0001-00',   // substituir
-  whatsapp: '(00) 00000-0000',  // substituir
+  cnpj: '39.433.589/0001-57',
+  telefones: ['(62) 99382-9700', '(41) 98704-0154'],
   logo: 'assets/logo.png',      // cabeçalho da tela e de cada página do PDF
   cores: { accent: '#FA8706', band: '#22292C', /* ... */ }
 };
@@ -150,10 +150,18 @@ bloco escuro do papel timbrado.
 | `assets/logo.png` | `logo.jpeg`, com o fundo claro removido por preenchimento a partir das bordas | cabeçalho da tela e de **todas** as páginas do PDF |
 
 O cabeçalho do PDF é tipográfico: logotipo à esquerda, título do documento à
-direita e um fio fino separando do corpo. O logotipo entra no dicionário
-`images` do pdfmake, então é embutido **uma única vez** por documento, e não a
-cada página. Trocar a arte por outra de proporção parecida (322×155) dispensa
-qualquer ajuste no código.
+direita e um fio fino separando do corpo. O rodapé traz CNPJ, telefones e a
+numeração das páginas.
+
+O mesmo logotipo vira a marca d'água ao centro de cada página, convertido para
+cinza no navegador e impresso a 20% de opacidade. A conversão é feita em canvas
+a partir da própria arte, então não há um segundo arquivo para manter em dia —
+trocar `assets/logo.png` por outra imagem de proporção parecida (322×155) muda
+cabeçalho e marca d'água de uma vez. Sem canvas disponível, o laudo sai sem a
+marca d'água em vez de não sair.
+
+As duas versões entram no dicionário `images` do pdfmake, então cada uma é
+embutida **uma única vez** por documento, e não a cada página.
 
 ## Estrutura
 
