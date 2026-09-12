@@ -330,7 +330,7 @@ window.GIRO = window.GIRO || {};
       return {
         image: 'marcaDagua',
         width: MARCA_DAGUA_LARGURA,
-        opacity: 0.2,
+        opacity: 0.1,
         absolutePosition: {
           x: (LARGURA_PAGINA - MARCA_DAGUA_LARGURA) / 2,
           y: (ALTURA_PAGINA - altura) / 2

@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--
+  Sem isto o navegador procura /favicon.ico na raiz do domínio, que no GitHub
+  Pages não é a pasta do projeto. O mesmo arquivo serve de ícone quando a
+  página é salva na tela inicial do celular.
+-->
+<link rel="icon" type="image/png" href="assets/icone.png">
+<link rel="apple-touch-icon" href="assets/icone.png">
 <meta name="referrer" content="no-referrer">
 <!--
   Trava de saída de dados: connect-src impede fetch, XHR, WebSocket e beacon
