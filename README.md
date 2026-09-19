@@ -9,7 +9,7 @@ requisição que carregue conteúdo do formulário. O PDF é montado no próprio
 
 ## Como usar
 
-Abra a página, preencha as 7 etapas e, na última, clique em **Gerar PDF**. Um modal
+Abra a página, preencha as 8 etapas e, na última, clique em **Gerar PDF**. Um modal
 mostra o que será emitido e pede confirmação; só depois o arquivo é baixado.
 
 A trilha numerada no topo mostra em que etapa você está, quais já passaram e
@@ -25,9 +25,23 @@ para conferência.
 
 | Onde | O que colar |
 |---|---|
-| Etapa 1, *Associado / condutor* | a mensagem com os dados da pessoa e da CNH |
-| Etapa 2, *Veículo do associado* | a mensagem com os dados do veículo |
+| Etapa 1, *Condutor* | a mensagem com os dados da pessoa e da CNH |
+| Etapa 2, *Associado* | idem, quando ele não é o próprio condutor |
+| Etapa 3, *Veículo do associado* | a mensagem com os dados do veículo |
 | Cartão de cada terceiro | as duas, cada uma na caixa do seu bloco |
+
+### Condutor e associado
+
+Quem dirigia nem sempre é quem contratou. A etapa 1 é do condutor e a 2 do
+associado, com uma chave no topo marcada por padrão: **o associado é a mesma
+pessoa que conduzia**. Marcada, não há nada a preencher na etapa 2 e o laudo sai
+com um bloco só, *Dados do associado / condutor*, como sempre saiu. Desmarcada,
+os campos aparecem e o laudo passa a trazer *Dados do condutor* e *Dados do
+associado* em blocos separados, cada um com a sua foto.
+
+O nome do associado só é cobrado na revisão quando ele é outra pessoa.
+
+### Como o texto é lido
 
 O reconhecimento é por rótulo, não por posição: a ordem não importa e colar uma
 mensagem de cada vez funciona. Colando a mensagem na caixa errada, ela avisa
@@ -173,7 +187,7 @@ embutida **uma única vez** por documento, e não a cada página.
 ## Estrutura
 
 ```
-index.html      formulário em 7 etapas, com trilha numerada no topo
+index.html      formulário em 8 etapas, com trilha numerada no topo
 css/giro.css    tema sobre o Bootstrap 5 (CDN)
 js/brand.js     identidade — fonte única de nome, contatos e cores
 js/state.js     modelo de dados do laudo, em memória

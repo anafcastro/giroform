@@ -477,6 +477,7 @@ window.GIRO = window.GIRO || {};
   // ---- coleta de imagens ---------------------------------------------------
   function idsDeImagem(laudo) {
     var ids = [];
+    if (laudo.condutor.fotoId) { ids.push(laudo.condutor.fotoId); }
     if (laudo.associado.fotoId) { ids.push(laudo.associado.fotoId); }
     ids = ids.concat(laudo.fotos, laudo.parecer.fotos);
     laudo.terceiros.forEach(function (t) {
@@ -581,8 +582,18 @@ window.GIRO = window.GIRO || {};
   function montarConteudo(laudo, mapa) {
     var conteudo = [];
 
-    conteudo.push(faixa('DADOS DO ASSOCIADO / CONDUTOR', { margin: [0, RECUO_CAPA, 0, 8] }));
-    conteudo.push(blocoPessoa(laudo.associado, mapa[laudo.associado.fotoId]));
+    // Um bloco quando o associado é o próprio condutor, dois quando são
+    // pessoas diferentes. A faixa da capa desce para não encostar no cabeçalho.
+    if (laudo.associadoEhCondutor) {
+      conteudo.push(faixa('DADOS DO ASSOCIADO / CONDUTOR', { margin: [0, RECUO_CAPA, 0, 8] }));
+      conteudo.push(blocoPessoa(laudo.condutor, mapa[laudo.condutor.fotoId]));
+    } else {
+      conteudo.push(faixa('DADOS DO CONDUTOR', { margin: [0, RECUO_CAPA, 0, 8] }));
+      conteudo.push(blocoPessoa(laudo.condutor, mapa[laudo.condutor.fotoId]));
+
+      conteudo.push(faixa('DADOS DO ASSOCIADO'));
+      conteudo.push(blocoPessoa(laudo.associado, mapa[laudo.associado.fotoId]));
+    }
 
     conteudo.push(faixa('DADOS DO VEÍCULO DO ASSOCIADO'));
     conteudo.push(blocoVeiculo(laudo.veiculo));

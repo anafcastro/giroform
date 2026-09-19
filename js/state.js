@@ -9,7 +9,7 @@ window.GIRO = window.GIRO || {};
 (function () {
   'use strict';
 
-  var SCHEMA = 2;   // 2: o parecer passou a ter fotos próprias
+  var SCHEMA = 3;   // 3: o condutor ganhou bloco próprio, separado do associado
 
   function pessoaVazia() {
     return {
@@ -45,6 +45,10 @@ window.GIRO = window.GIRO || {};
   function laudoVazio() {
     return {
       v: SCHEMA,
+      // Quem dirigia nem sempre é quem contratou. Marcado, o associado é o
+      // próprio condutor e o laudo traz um bloco só.
+      condutor: pessoaVazia(),
+      associadoEhCondutor: true,
       associado: pessoaVazia(),
       veiculo: veiculoVazio(),
       bo: { numero: '', relato: '', emitidoEm: '' },

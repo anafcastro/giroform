@@ -105,10 +105,15 @@ window.GIRO = window.GIRO || {};
     $$('[data-path]', raiz).forEach(function (el) {
       if (!el.matches('input, select, textarea')) { return; }
       var v = S().get(el.dataset.path);
+      if (el.type === 'checkbox') {
+        el.checked = !!v;
+        return;
+      }
       el.value = (v === undefined || v === null) ? '' : v;
       if (el.tagName === 'TEXTAREA') { autoCrescer(el); }
     });
     lerOpcoes(raiz);
+    sincronizarAssociado();
   }
 
   /**
@@ -177,10 +182,22 @@ window.GIRO = window.GIRO || {};
       }
     }
 
-    S().set(el.dataset.path, el.value);
+    S().set(el.dataset.path, el.type === 'checkbox' ? el.checked : el.value);
     if (el.tagName === 'TEXTAREA') { autoCrescer(el); }
     if (el.dataset.mask === 'cpf' && el.classList.contains('is-invalid')) { conferirCpf(el); }
+    if (el.type === 'checkbox') { sincronizarAssociado(); }
     GIRO.app.marcarAlteracao();
+  }
+
+  /**
+   * Os campos do associado só aparecem quando ele não é o próprio condutor.
+   * Marcada a repetição, o laudo usa os dados da etapa do condutor e não há o
+   * que preencher aqui.
+   */
+  function sincronizarAssociado() {
+    var bloco = $('#associadoProprio');
+    if (!bloco) { return; }
+    bloco.hidden = !!S().get('associadoEhCondutor');
   }
 
   function autoCrescer(el) {
@@ -668,11 +685,12 @@ window.GIRO = window.GIRO || {};
     return bloco;
   }
 
-  /** As duas caixas fixas do laudo: o condutor na etapa 1, o veículo na 2. */
+  /** Caixas fixas do laudo: condutor, associado e veículo, cada uma na sua etapa. */
   function renderColarAssociado() {
     [
-      ['#colarAssociado', 'pessoa', 'associado.', 'na etapa 2, em "Veículo do associado"'],
-      ['#colarVeiculo', 'veiculo', 'veiculo.', 'na etapa 1, em "Associado / condutor"']
+      ['#colarCondutor', 'pessoa', 'condutor.', 'na etapa do veículo'],
+      ['#colarAssociado', 'pessoa', 'associado.', 'na etapa do veículo'],
+      ['#colarVeiculo', 'veiculo', 'veiculo.', 'na etapa do condutor ou na do associado']
     ].forEach(function (c) {
       var host = $(c[0]);
       if (!host) { return; }
@@ -688,7 +706,7 @@ window.GIRO = window.GIRO || {};
 
   // ---- revisão -------------------------------------------------------------
   var OBRIGATORIOS = [
-    ['associado.nome', 'Nome do associado'],
+    ['condutor.nome', 'Nome do condutor'],
     ['veiculo.placa', 'Placa do veículo do associado'],
     ['veiculo.marca', 'Marca/modelo do veículo do associado'],
     ['veiculo.proprietario', 'Proprietário do veículo do associado'],
@@ -696,7 +714,13 @@ window.GIRO = window.GIRO || {};
   ];
 
   function pendencias() {
-    return OBRIGATORIOS.filter(function (c) {
+    var campos = OBRIGATORIOS.slice();
+    // Só cobra o nome do associado quando ele é outra pessoa; sendo o próprio
+    // condutor, o nome já veio na etapa anterior.
+    if (!S().get('associadoEhCondutor')) {
+      campos.push(['associado.nome', 'Nome do associado']);
+    }
+    return campos.filter(function (c) {
       return !String(S().get(c[0]) || '').trim();
     }).map(function (c) { return c[1]; });
   }
@@ -704,7 +728,10 @@ window.GIRO = window.GIRO || {};
   function renderRevisao() {
     var l = S().laudo;
     var itens = [
-      ['Associado', l.associado.nome || '—'],
+      ['Condutor', l.condutor.nome || '—'],
+      ['Associado', l.associadoEhCondutor
+        ? (l.condutor.nome ? 'o próprio condutor' : '—')
+        : (l.associado.nome || '—')],
       ['Veículo', [l.veiculo.marca, l.veiculo.placa].filter(Boolean).join(' · ') || '—'],
       ['Boletim de ocorrência', l.bo.numero ? 'Nº ' + l.bo.numero : '—'],
       ['Terceiros', String(l.terceiros.length)],

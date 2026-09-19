@@ -67,17 +67,17 @@
 <main class="container-xl pb-5" id="appPrincipal">
 
   <!-- 1 -->
-  <section class="etapa" data-etapa="1" data-titulo="Associado / condutor" hidden>
+  <section class="etapa" data-etapa="1" data-titulo="Condutor" hidden>
     <header class="etapa-cabecalho">
-      <h2 class="etapa-titulo">Associado / condutor</h2>
+      <h2 class="etapa-titulo">Condutor</h2>
     </header>
     <div class="card card-etapa colar-destaque mb-3"><div class="card-body">
       <h3 class="colar-titulo">Cole aqui mensagem de WhatsApp do condutor</h3>
-      <div id="colarAssociado"></div>
+      <div id="colarCondutor"></div>
     </div></div>
     <div class="card card-etapa mb-3"><div class="card-body">
       <h3 class="h6">Foto do condutor</h3>
-      <div class="retrato" data-foto="associado.fotoId">
+      <div class="retrato" data-foto="condutor.fotoId">
   <div class="retrato-preview"></div>
   <div class="retrato-botoes">
     <label class="btn btn-primary mb-0">Tirar foto<input type="file" accept="image/*" capture="user" hidden></label>
@@ -88,7 +88,87 @@
 </div>
     </div></div>
     <div class="card card-etapa"><div class="card-body">
-      <h3 class="h6 mb-3">Dados</h3>
+      <h3 class="h6 mb-3">Dados de quem conduzia</h3>
+      <div class="row g-3">
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-nome">Nome</label>
+  <input class="form-control" id="f-condutor-nome" data-path="condutor.nome" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-mae">Mãe</label>
+  <input class="form-control" id="f-condutor-mae" data-path="condutor.mae" type="text" autocapitalize="words" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-rg">RG</label>
+  <input class="form-control" id="f-condutor-rg" data-path="condutor.rg" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-cpf">CPF</label>
+  <input class="form-control" id="f-condutor-cpf" data-path="condutor.cpf" type="text" inputmode="numeric" data-mask="cpf" placeholder="000.000.000-00" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-nascimento">Data de nascimento</label>
+  <input class="form-control" id="f-condutor-nascimento" data-path="condutor.nascimento" type="date" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-categoria">Categoria da CNH</label>
+    <div class="campo-opcoes" data-path="condutor.categoria">
+      <select class="form-select" id="f-condutor-categoria"><option value="">—</option><option value="ACC">ACC</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="AB">AB</option><option value="AC">AC</option><option value="AD">AD</option><option value="AE">AE</option></select>
+    </div>
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-cnh">CNH</label>
+  <input class="form-control" id="f-condutor-cnh" data-path="condutor.cnh" type="text" inputmode="numeric" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-validade">Validade da CNH</label>
+  <input class="form-control" id="f-condutor-validade" data-path="condutor.validade" type="date" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-renach">Renach</label>
+  <input class="form-control" id="f-condutor-renach" data-path="condutor.renach" type="text" autocapitalize="characters" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+<div class="col-12 col-md-6">
+  <label class="form-label" for="f-condutor-observacao">Observação</label>
+  <input class="form-control" id="f-condutor-observacao" data-path="condutor.observacao" type="text" enterkeyhint="next" autocomplete="off" spellcheck="false">
+</div>
+      </div>
+    </div></div>
+  </section>
+
+
+  <!-- 2 -->
+  <section class="etapa" data-etapa="2" data-titulo="Associado" hidden>
+    <header class="etapa-cabecalho">
+      <h2 class="etapa-titulo">Associado</h2>
+    </header>
+    <div class="card card-etapa mb-3"><div class="card-body">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="f-mesmoCondutor" data-path="associadoEhCondutor" checked>
+        <label class="form-check-label" for="f-mesmoCondutor">O associado é a mesma pessoa que conduzia</label>
+      </div>
+      <p class="form-text mb-0">Marcado, o laudo sai com um bloco só, <strong>Dados do associado / condutor</strong>,
+      com o que foi preenchido na etapa anterior. Desmarque quando forem pessoas diferentes.</p>
+    </div></div>
+    <div id="associadoProprio" hidden>
+    <div class="card card-etapa colar-destaque mb-3"><div class="card-body">
+      <h3 class="colar-titulo">Cole aqui mensagem de WhatsApp do associado</h3>
+      <div id="colarAssociado"></div>
+    </div></div>
+    <div class="card card-etapa mb-3"><div class="card-body">
+      <h3 class="h6">Foto do associado</h3>
+      <div class="retrato" data-foto="associado.fotoId">
+  <div class="retrato-preview"></div>
+  <div class="retrato-botoes">
+    <label class="btn btn-primary mb-0">Tirar foto<input type="file" accept="image/*" capture="user" hidden></label>
+    <label class="btn btn-outline-secondary mb-0">Galeria<input type="file" accept="image/*" hidden></label>
+    <button type="button" class="btn btn-outline-danger retrato-remover" hidden>Remover</button>
+  </div>
+  <p class="form-text mb-0">Retrato 3×4, opcional.</p>
+</div>
+    </div></div>
+    <div class="card card-etapa"><div class="card-body">
+      <h3 class="h6 mb-3">Dados de quem contratou</h3>
       <div class="row g-3">
 <div class="col-12 col-md-6">
   <label class="form-label" for="f-associado-nome">Nome</label>
@@ -134,10 +214,11 @@
 </div>
       </div>
     </div></div>
+    </div>
   </section>
 
-  <!-- 2 -->
-  <section class="etapa" data-etapa="2" data-titulo="Veículo do associado" hidden>
+  <!-- 3 -->
+  <section class="etapa" data-etapa="3" data-titulo="Veículo do associado" hidden>
     <header class="etapa-cabecalho">
       <h2 class="etapa-titulo">Veículo do associado</h2>
     </header>
@@ -224,8 +305,8 @@
     </div></div>
   </section>
 
-  <!-- 3 -->
-  <section class="etapa" data-etapa="3" data-titulo="Boletim de ocorrência" hidden>
+  <!-- 4 -->
+  <section class="etapa" data-etapa="4" data-titulo="Boletim de ocorrência" hidden>
     <header class="etapa-cabecalho">
       <h2 class="etapa-titulo">Boletim de ocorrência</h2>
     </header>
@@ -247,8 +328,8 @@
     </div></div>
   </section>
 
-  <!-- 4 -->
-  <section class="etapa" data-etapa="4" data-titulo="Terceiros" hidden>
+  <!-- 5 -->
+  <section class="etapa" data-etapa="5" data-titulo="Terceiros" hidden>
     <header class="etapa-cabecalho">
       <h2 class="etapa-titulo">Terceiros envolvidos</h2>
       <p class="etapa-apoio">Adicione um cartão por terceiro. O laudo funciona normalmente sem nenhum.</p>
@@ -258,8 +339,8 @@
     <button type="button" class="btn btn-outline-primary btn-lg w-100" id="btnAddTerceiro">+ Adicionar terceiro</button>
   </section>
 
-  <!-- 5 -->
-  <section class="etapa" data-etapa="5" data-titulo="Parecer técnico" hidden>
+  <!-- 6 -->
+  <section class="etapa" data-etapa="6" data-titulo="Parecer técnico" hidden>
     <header class="etapa-cabecalho">
       <h2 class="etapa-titulo">Parecer técnico</h2>
     </header>
@@ -290,8 +371,8 @@
     </div></div>
   </section>
 
-  <!-- 6 -->
-  <section class="etapa" data-etapa="6" data-titulo="Fotos dos veículos" hidden>
+  <!-- 7 -->
+  <section class="etapa" data-etapa="7" data-titulo="Fotos dos veículos" hidden>
     <header class="etapa-cabecalho">
       <h2 class="etapa-titulo">Fotos dos veículos</h2>
       <p class="etapa-apoio">Cada foto ocupa uma página inteira do PDF, na ordem definida aqui.</p>
@@ -299,8 +380,8 @@
     <div id="galerias"></div>
   </section>
 
-  <!-- 7 -->
-  <section class="etapa" data-etapa="7" data-titulo="Revisão e geração" hidden>
+  <!-- 8 -->
+  <section class="etapa" data-etapa="8" data-titulo="Revisão e geração" hidden>
     <header class="etapa-cabecalho">
       <h2 class="etapa-titulo">Revisão</h2>
     </header>
