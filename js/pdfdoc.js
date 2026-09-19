@@ -255,7 +255,7 @@ window.GIRO = window.GIRO || {};
   var LOGO_LARGURA = 66;
   var LOGO_LARGURA_CAPA = 118;
   var RECUO_CAPA = 28;
-  var PROPORCAO_LOGO = 155 / 322;   // usada só quando a arte não pôde ser medida
+  var PROPORCAO_LOGO = 337 / 800;   // usada só quando a arte não pôde ser medida
 
   /** Filete do cabeçalho e do rodapé: um traço laranja curto e o resto em fio fino. */
   function filete(deslocamentoY) {
@@ -314,9 +314,9 @@ window.GIRO = window.GIRO || {};
    * empresa entra no lugar quando a arte não carrega, em vez de deixar o laudo
    * sem identificação.
    */
-  function colunaDaMarca(temLogo, o) {
-    return temLogo
-      ? { width: o.largura, stack: [{ image: 'logo', width: o.largura }] }
+  function colunaDaMarca(logo, o) {
+    return logo
+      ? { width: o.largura, stack: [{ svg: logo.cor, width: o.largura }] }
       : {
           // Na capa a largura é fixa: posicionado em absoluto, o 'auto' mede
           // curto demais e empurra a coluna do título para fora da folha.
@@ -338,8 +338,7 @@ window.GIRO = window.GIRO || {};
 
   /** Cabeçalho das páginas 2 em diante, pelo `header` do documento. */
   function cabecalhoCompacto(logo) {
-    var temLogo = !!logo;
-    var alturaLogo = temLogo ? LOGO_LARGURA * logo.proporcao : 0;
+    var alturaLogo = logo ? LOGO_LARGURA * logo.proporcao : 0;
 
     return {
       margin: [MARGENS[0], 30, MARGENS[2], 0],
@@ -347,7 +346,7 @@ window.GIRO = window.GIRO || {};
         {
           columnGap: 14,
           columns: [
-            colunaDaMarca(temLogo, { largura: LOGO_LARGURA, corpoNome: 11.5, descidaNome: 9 }),
+            colunaDaMarca(logo, { largura: LOGO_LARGURA, corpoNome: 11.5, descidaNome: 9 }),
             tituloDoDocumento('*', 13, 7.5, descidaDoTitulo(alturaLogo, 13, 7.5), false)
           ]
         },
@@ -361,8 +360,7 @@ window.GIRO = window.GIRO || {};
    * explícitas porque, posicionado em absoluto, o nó não herda a área útil.
    */
   function cabecalhoDaCapa(logo) {
-    var temLogo = !!logo;
-    var alturaLogo = LOGO_LARGURA_CAPA * (temLogo ? logo.proporcao : PROPORCAO_LOGO);
+    var alturaLogo = LOGO_LARGURA_CAPA * (logo ? logo.proporcao : PROPORCAO_LOGO);
     var larguraTexto = LARGURA_UTIL - LOGO_LARGURA_CAPA - 14;
 
     return {
@@ -371,7 +369,7 @@ window.GIRO = window.GIRO || {};
         {
           columnGap: 14,
           columns: [
-            colunaDaMarca(temLogo, {
+            colunaDaMarca(logo, {
               largura: LOGO_LARGURA_CAPA,
               larguraSemLogo: LOGO_LARGURA_CAPA,
               corpoNome: 14,
@@ -427,9 +425,8 @@ window.GIRO = window.GIRO || {};
       if (pagina === 1) { nos.push(cabecalhoDaCapa(logo)); }
       if (temMarca) {
         nos.push({
-          image: 'marcaDagua',
+          svg: logo.cinza,
           width: MARCA_DAGUA_LARGURA,
-          opacity: 0.1,
           absolutePosition: {
             x: (LARGURA_PAGINA - MARCA_DAGUA_LARGURA) / 2,
             y: (ALTURA_PAGINA - alturaMarca) / 2
@@ -498,84 +495,64 @@ window.GIRO = window.GIRO || {};
     });
   }
 
-  /** Tons de cinza preservando a transparência do PNG. */
-  function emCinza(ctx, largura, altura) {
-    try {
-      var imagem = ctx.getImageData(0, 0, largura, altura);
-      var px = imagem.data;
-      for (var i = 0; i < px.length; i += 4) {
-        // Luminância perceptual: o laranja da marca cai num cinza médio, e não
-        // no quase branco que a média simples dos canais produziria.
-        var v = (px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114) | 0;
-        px[i] = v;
-        px[i + 1] = v;
-        px[i + 2] = v;
-      }
-      ctx.putImageData(imagem, 0, 0);
-      return ctx.canvas.toDataURL('image/png');
-    } catch (e) {
-      return null;   // um laudo sem marca d'água é melhor do que nenhum laudo
-    }
+  var MARCA_DAGUA_FORCA = 0.1;
+
+  /**
+   * Versão da arte para a marca d'água: cada cor vira o cinza da sua
+   * luminância e desmaia sobre o branco do papel.
+   *
+   * O desmaio é feito na cor, e não com opacidade, por dois motivos: o
+   * `background` do pdfmake é desenhado antes do conteúdo, sobre a folha
+   * branca, então o resultado é o mesmo; e o nó `svg` do pdfmake ignora
+   * `opacity` — só o nó `image` a respeita.
+   */
+  function marcaDagua(svg) {
+    return svg.replace(/#([0-9a-fA-F]{6})\b/g, function (_, hex) {
+      var r = parseInt(hex.slice(0, 2), 16);
+      var g = parseInt(hex.slice(2, 4), 16);
+      var b = parseInt(hex.slice(4, 6), 16);
+      // Luminância perceptual: o laranja da marca cai num cinza médio, e não
+      // no quase branco que a média simples dos canais produziria.
+      var lum = r * 0.299 + g * 0.587 + b * 0.114;
+      var v = Math.round(255 - (255 - lum) * MARCA_DAGUA_FORCA);
+      var h = (v < 16 ? '0' : '') + v.toString(16);
+      return '#' + h + h + h;
+    });
   }
 
-  /** Bytes do arquivo em data URL, sem passar por canvas. */
-  function arquivoEmDataUrl(caminho) {
-    return fetch(caminho)
-      .then(function (r) { return r.ok ? r.blob() : null; })
-      .then(function (blob) {
-        if (!blob) { return null; }
-        return new Promise(function (resolve, reject) {
-          var fr = new FileReader();
-          fr.onload = function () { resolve(fr.result); };
-          fr.onerror = function () { reject(fr.error); };
-          fr.readAsDataURL(blob);
-        });
-      });
+  /** Proporção da arte, lida do próprio desenho. */
+  function proporcaoDoSvg(svg) {
+    var m = /viewBox\s*=\s*"\s*[-\d.]+\s+[-\d.]+\s+([\d.]+)\s+([\d.]+)/.exec(svg);
+    if (!m) { return PROPORCAO_LOGO; }
+    var largura = parseFloat(m[1]);
+    var altura = parseFloat(m[2]);
+    return largura > 0 ? altura / largura : PROPORCAO_LOGO;
   }
 
   /**
-   * Logotipo em duas versões: a de cor, para os cabeçalhos, e a cinza, para a
-   * marca d'água. A cinza sai da mesma arte em vez de ser um segundo arquivo,
-   * para trocar o logotipo continuar mudando tudo de uma vez.
+   * Logotipo em duas versões: a de cor, para os cabeçalhos, e a apagada, para
+   * a marca d'água. A apagada sai da mesma arte em vez de ser um segundo
+   * arquivo, para trocar o logotipo continuar mudando tudo de uma vez.
    *
-   * A de cor vai como os bytes do arquivo, sem canvas no caminho: o
-   * ida-e-volta por `getImageData` mexe nas bordas semitransparentes por causa
-   * do alfa pré-multiplicado, e isso aparece no logotipo ampliado da capa.
+   * A arte é vetorial e vai para o PDF como vetor: a capa fica nítida em
+   * qualquer tamanho, e não há mapa de bits nem canvas no caminho — era o
+   * ida-e-volta por `getImageData` que estragava as bordas semitransparentes
+   * do PNG quando o logotipo era ampliado.
    */
   function carregarLogo() {
     if (!GIRO.brand.logo) { return Promise.resolve(null); }
 
-    var imagem = new Promise(function (resolve, reject) {
-      var img = new Image();
-      img.onload = function () { resolve(img); };
-      img.onerror = function () { reject(new Error('logotipo não carregou')); };
-      img.src = GIRO.brand.logo;
-    });
-
-    return Promise.all([arquivoEmDataUrl(GIRO.brand.logo), imagem])
-      .then(function (r) {
-        var cor = r[0];
-        var img = r[1];
-        if (!cor) { return null; }
-
-        var largura = img.naturalWidth || img.width;
-        var altura = img.naturalHeight || img.height;
-
-        var cinza = null;
-        try {
-          var canvas = document.createElement('canvas');
-          canvas.width = largura;
-          canvas.height = altura;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          cinza = emCinza(ctx, largura, altura);
-        } catch (e) {
-          cinza = null;   // sem marca d'água, mas com laudo
-        }
-
-        return { cor: cor, cinza: cinza, proporcao: altura / largura };
+    return fetch(GIRO.brand.logo)
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (svg) {
+        if (!svg || svg.indexOf('<svg') < 0) { return null; }
+        return {
+          cor: svg,
+          cinza: marcaDagua(svg),
+          proporcao: proporcaoDoSvg(svg)
+        };
       })
-      .catch(function () { return null; });
+      .catch(function () { return null; });   // laudo sem logotipo é melhor que laudo nenhum
   }
 
   // ---- documento -----------------------------------------------------------
@@ -671,11 +648,8 @@ window.GIRO = window.GIRO || {};
       .then(function (r) {
         var mapa = r[0];
         var logo = r[1];
-        var imagens = {};
-        if (logo) { imagens.logo = logo.cor; }
-        if (logo && logo.cinza) { imagens.marcaDagua = logo.cinza; }
 
-        var doc = {
+        return {
           pageSize: 'A4',
           pageMargins: MARGENS,
           info: {
@@ -688,8 +662,6 @@ window.GIRO = window.GIRO || {};
           background: fundo(logo),
           content: montarConteudo(laudo, mapa)
         };
-        if (Object.keys(imagens).length) { doc.images = imagens; }
-        return doc;
       });
   }
 

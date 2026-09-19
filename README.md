@@ -149,7 +149,7 @@ GIRO.brand = {
   nome: 'GIRO PRONTA REAÇÃO',
   cnpj: '39.433.589/0001-57',
   telefones: ['(62) 99382-9700', '(41) 98704-0154'],
-  logo: 'assets/logo.png',      // cabeçalho da tela e de cada página do PDF
+  logo: 'assets/logo.svg',      // cabeçalho da tela e de cada página do PDF
   cores: { accent: '#FA8706', band: '#22292C', /* ... */ }
 };
 ```
@@ -161,8 +161,18 @@ bloco escuro do papel timbrado.
 
 | Arquivo | Origem | Onde aparece |
 |---|---|---|
-| `assets/logo.png` | `logo.jpeg`, com o fundo claro removido por preenchimento a partir das bordas | cabeçalho da tela e de **todas** as páginas do PDF |
+| `assets/logo.svg` | redesenho vetorial da marca | cabeçalho da tela e de **todas** as páginas do PDF |
+| `assets/logo.png` | `logo.jpeg`, com o fundo claro removido por preenchimento a partir das bordas | nenhum lugar hoje — é a arte original, guardada para conferência e para voltar atrás |
 | `assets/icone.png` | recorte quadrado da marca do G, sobre branco | aba do navegador e ícone na tela inicial do celular |
+
+O logotipo é **vetor**, então a capa fica nítida em qualquer tamanho e não há
+mapa de bits para ampliar. O arquivo passou por dois preparos antes de entrar:
+o `<text>` do subtítulo virou contorno, porque o PDF não tem a fonte em que ele
+foi escrito e um texto sem fonte registrada quebra a conversão do pdfmake; e o
+`viewBox` foi apertado no desenho, para a largura pedida no código ser a
+largura do logotipo. O desenho é copiado para o fluxo de cada página — cerca de
+8 KB por página, contra uma única cópia do PNG no documento inteiro. Ao lado das
+fotos do laudo isso é ruído, mas é a razão de os contornos irem arredondados.
 
 O cabeçalho do PDF é tipográfico: logotipo à esquerda, título do documento à
 direita e um fio fino separando do corpo. Na primeira página ele sai ampliado,
@@ -174,15 +184,18 @@ O cabeçalho ampliado é desenhado no `background`, não no `header`: o pdfmake
 monta o cabeçalho dentro de um bloco da altura da margem superior, que não pode
 variar por página, e descarta o que passa disso.
 
-O mesmo logotipo vira a marca d'água ao centro de cada página, convertido para
-cinza no navegador e impresso a 10% de opacidade. A conversão é feita em canvas
-a partir da própria arte, então não há um segundo arquivo para manter em dia —
-trocar `assets/logo.png` por outra imagem de proporção parecida (322×155) muda
-cabeçalho e marca d'água de uma vez. Sem canvas disponível, o laudo sai sem a
-marca d'água em vez de não sair.
+O mesmo logotipo vira a marca d'água ao centro de cada página. A versão apagada
+sai da própria arte, trocando cada cor pelo cinza da sua luminância e desmaiando
+a 10% — então não há um segundo arquivo para manter em dia, e trocar
+`assets/logo.svg` muda cabeçalho e marca d'água de uma vez.
 
-As duas versões entram no dicionário `images` do pdfmake, então cada uma é
-embutida **uma única vez** por documento, e não a cada página.
+O desmaio é feito na cor, e não com opacidade, por dois motivos: o `background`
+do pdfmake é desenhado antes do conteúdo, sobre a folha branca, então o
+resultado é o mesmo; e o nó `svg` do pdfmake ignora `opacity` — só o nó `image`
+a respeita.
+
+A altura do logotipo sai do `viewBox` da arte, lido em tempo de execução: trocar
+o arquivo por outro SVG dispensa qualquer ajuste no código.
 
 ## Estrutura
 
@@ -199,7 +212,8 @@ js/pdfdoc.js    montagem do documento (pdfmake)
 js/form.js      navegação, ligação com o estado, terceiros e galerias
 js/app.js       retomada, expiração, modal de confirmação e geração
 assets/fonts/   Barlow, Barlow Condensed e Carlito, reduzidas ao latim
-assets/logo.png logotipo com fundo transparente
+assets/logo.svg logotipo vetorial, usado na tela e no PDF
+assets/logo.png logotipo original em bitmap, fora de uso
 assets/icone.png ícone quadrado da aba e da tela inicial
 ```
 

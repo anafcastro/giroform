@@ -13,11 +13,12 @@ GIRO.brand = {
   cnpj: '39.433.589/0001-57',
   telefones: ['(62) 99382-9700', '(41) 98704-0154'],
 
-  // Logotipo com fundo transparente. Serve à tela e ao cabeçalho de cada
-  // página do PDF — a faixa cheia do papel timbrado pesava demais impressa.
-  // A altura sai da proporção da arte (322×155); trocar a imagem por outra de
-  // proporção parecida dispensa qualquer ajuste no código.
-  logo: 'assets/logo.png',
+  // Logotipo vetorial, com fundo transparente. Serve à tela e ao cabeçalho de
+  // cada página do PDF — a faixa cheia do papel timbrado pesava demais
+  // impressa. Vai para o PDF como vetor, então fica nítido em qualquer
+  // tamanho; a altura sai da proporção declarada no viewBox da própria arte,
+  // e trocar o arquivo por outro SVG dispensa qualquer ajuste no código.
+  logo: 'assets/logo.svg',
 
   // ---- Título do documento ------------------------------------------------
   documento: {
