@@ -169,48 +169,25 @@ window.GIRO = window.GIRO || {};
   // ---- colagem em caixa alta -------------------------------------------------
 
   /**
-   * Texto corrido colado todo em maiúsculas (B.O., consultas, outros laudos)
-   * vira minúsculas com só a primeira letra de cada parágrafo em maiúscula,
-   * para o laudo sair com uma grafia só.
-   *
-   * Texto copiado de PDF chega com quebras no meio da frase, então nem toda
-   * linha é parágrafo: uma linha só abre parágrafo se vier no começo, depois
-   * de linha em branco ou depois de linha que termina a frase.
+   * Depois de colar num campo de texto corrido, o campo inteiro passa pela
+   * regra de maiúsculas do laudo, para quem preenche já ver como vai sair.
+   * O PDF aplica a mesma regra de novo, então nada escapa por aqui.
    */
-  function emCaixaAlta(s) {
-    return /\p{L}/u.test(s) && s === s.toUpperCase() && s !== s.toLowerCase();
-  }
-
-  function abreParagrafo(anterior) {
-    return !anterior.trim() || /[.!?:;]["'”)]*\s*$/.test(anterior);
-  }
-
-  function capitalizarParagrafos(texto, antes) {
-    var anterior = String(antes || '').split('\n').pop();
-    return texto.toLowerCase().split('\n').map(function (linha) {
-      var saida = abreParagrafo(anterior)
-        ? linha.replace(/\p{L}/u, function (c) { return c.toUpperCase(); })
-        : linha;
-      anterior = linha;
-      return saida;
-    }).join('\n');
-  }
-
   function aoColar(e) {
     var el = e.target;
     // Só texto corrido: o endereço é campo de registro e fica como veio.
     if (el.tagName !== 'TEXTAREA' || !el.dataset.path || el.dataset.path.slice(-9) === '.endereco') { return; }
 
-    var colado = (e.clipboardData || window.clipboardData).getData('text');
-    if (!colado || !emCaixaAlta(colado)) { return; }
-
-    e.preventDefault();
-    var texto = capitalizarParagrafos(colado.replace(/\r/g, ''), el.value.slice(0, el.selectionStart));
-    // insertText mantém o Ctrl+Z; onde não houver, insere à mão.
-    if (!document.execCommand || !document.execCommand('insertText', false, texto)) {
-      el.setRangeText(texto, el.selectionStart, el.selectionEnd, 'end');
+    // Espera a colagem entrar no campo para padronizar o texto já completo.
+    setTimeout(function () {
+      var padrao = GIRO.texto.padronizar(el.value);
+      if (padrao === el.value) { return; }
+      var inicio = el.selectionStart;
+      var fim = el.selectionEnd;
+      el.value = padrao;
+      try { el.setSelectionRange(inicio, fim); } catch (err) { /* ignorado */ }
       el.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    }, 0);
   }
 
   function aoDigitar(e) {

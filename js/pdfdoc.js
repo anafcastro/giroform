@@ -173,7 +173,9 @@ window.GIRO = window.GIRO || {};
 
   function paragrafos(texto, opcoes) {
     var o = opcoes || {};
-    var blocos = String(texto || '').split(/\n{2,}/).filter(function (p) {
+    // Todo texto corrido passa pela mesma regra de maiúsculas antes de virar
+    // PDF, colado ou digitado, de rascunho novo ou antigo.
+    var blocos = GIRO.texto.padronizar(texto).split(/\n{2,}/).filter(function (p) {
       return p.trim().length;
     });
     if (!blocos.length) { return [{ text: '', font: 'Carlito', fontSize: 10 }]; }
