@@ -630,13 +630,18 @@ window.GIRO = window.GIRO || {};
       }
     });
 
+    // O aviso nunca se divide: se não couber inteiro no fim da página, desce
+    // todo para a seguinte.
     conteudo.push({
-      text: GIRO.brand.avisoLgpd,
-      font: 'Barlow',
-      bold: true,
-      fontSize: 7.5,
-      alignment: 'justify',
-      color: C().ink,
+      unbreakable: true,
+      stack: [{
+        text: GIRO.brand.avisoLgpd,
+        font: 'Barlow',
+        bold: true,
+        fontSize: 7.5,
+        alignment: 'justify',
+        color: C().ink
+      }],
       margin: [24, 26, 24, 0]
     });
 

@@ -166,6 +166,53 @@ window.GIRO = window.GIRO || {};
     atualizarResumos();
   }
 
+  // ---- colagem em caixa alta -------------------------------------------------
+
+  /**
+   * Texto corrido colado todo em maiúsculas (B.O., consultas, outros laudos)
+   * vira minúsculas com só a primeira letra de cada parágrafo em maiúscula,
+   * para o laudo sair com uma grafia só.
+   *
+   * Texto copiado de PDF chega com quebras no meio da frase, então nem toda
+   * linha é parágrafo: uma linha só abre parágrafo se vier no começo, depois
+   * de linha em branco ou depois de linha que termina a frase.
+   */
+  function emCaixaAlta(s) {
+    return /\p{L}/u.test(s) && s === s.toUpperCase() && s !== s.toLowerCase();
+  }
+
+  function abreParagrafo(anterior) {
+    return !anterior.trim() || /[.!?:;]["'”)]*\s*$/.test(anterior);
+  }
+
+  function capitalizarParagrafos(texto, antes) {
+    var anterior = String(antes || '').split('\n').pop();
+    return texto.toLowerCase().split('\n').map(function (linha) {
+      var saida = abreParagrafo(anterior)
+        ? linha.replace(/\p{L}/u, function (c) { return c.toUpperCase(); })
+        : linha;
+      anterior = linha;
+      return saida;
+    }).join('\n');
+  }
+
+  function aoColar(e) {
+    var el = e.target;
+    // Só texto corrido: o endereço é campo de registro e fica como veio.
+    if (el.tagName !== 'TEXTAREA' || !el.dataset.path || el.dataset.path.slice(-9) === '.endereco') { return; }
+
+    var colado = (e.clipboardData || window.clipboardData).getData('text');
+    if (!colado || !emCaixaAlta(colado)) { return; }
+
+    e.preventDefault();
+    var texto = capitalizarParagrafos(colado.replace(/\r/g, ''), el.value.slice(0, el.selectionStart));
+    // insertText mantém o Ctrl+Z; onde não houver, insere à mão.
+    if (!document.execCommand || !document.execCommand('insertText', false, texto)) {
+      el.setRangeText(texto, el.selectionStart, el.selectionEnd, 'end');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+
   function aoDigitar(e) {
     var el = e.target;
     if (!el.dataset || !el.dataset.path) { return; }
@@ -781,6 +828,7 @@ window.GIRO = window.GIRO || {};
       }
       aoEscolher(e);
     });
+    document.addEventListener('paste', aoColar);
     document.addEventListener('focusout', function (e) {
       if (e.target.dataset && e.target.dataset.mask === 'cpf') { conferirCpf(e.target); }
     });
