@@ -439,13 +439,43 @@ window.GIRO = window.GIRO || {};
     };
   }
 
+  /*
+   * Aviso de confidencialidade: só na última página, dentro do rodapé —
+   * abaixo do fio e acima da linha do CNPJ e da numeração.
+   *
+   * O pdfmake corta o que passa da altura da margem inferior, e o aviso não
+   * cabe nela. Na última página o rodapé então começa mais acima, pela altura
+   * do aviso, e a linha do CNPJ continua no lugar de sempre. ALTURA_AVISO é a
+   * altura que o texto ocupa na largura útil; trocar o texto ou a fonte pede
+   * conferir esse número.
+   */
+  var ALTURA_AVISO = 45;                   // cinco linhas de 9 pt
+  var FOLGA_AVISO = 5;                     // entre o aviso e a linha do CNPJ
+
+  function aviso() {
+    return {
+      text: GIRO.brand.avisoLgpd,
+      font: 'Barlow',
+      bold: true,
+      fontSize: 7.5,
+      alignment: 'justify',
+      color: C().ink,
+      margin: [0, 0, 0, FOLGA_AVISO]
+    };
+  }
+
+  /** Quanto o rodapé sobe na última página para caber o aviso. */
+  var SUBIDA_AVISO = ALTURA_AVISO + FOLGA_AVISO;
+
   /** Rodapé: o mesmo fio do cabeçalho, contatos da empresa e numeração. */
   function rodape(pagina, total) {
     var b = GIRO.brand;
+    var ultima = pagina === total;
     return {
-      margin: [MARGENS[0], 12, MARGENS[2], 0],
+      margin: [MARGENS[0], 12 - (ultima ? SUBIDA_AVISO : 0), MARGENS[2], 0],
       stack: [
-        Object.assign(filete(0), { margin: [0, 0, 0, 5] }),
+        Object.assign(filete(0), { margin: [0, 0, 0, 5] })
+      ].concat(ultima ? [aviso()] : [], [
         {
           columns: [
             {
@@ -469,7 +499,7 @@ window.GIRO = window.GIRO || {};
             }
           ]
         }
-      ]
+      ])
     };
   }
 
@@ -632,20 +662,10 @@ window.GIRO = window.GIRO || {};
       }
     });
 
-    // O aviso nunca se divide: se não couber inteiro no fim da página, desce
-    // todo para a seguinte.
-    conteudo.push({
-      unbreakable: true,
-      stack: [{
-        text: GIRO.brand.avisoLgpd,
-        font: 'Barlow',
-        bold: true,
-        fontSize: 7.5,
-        alignment: 'justify',
-        color: C().ink
-      }],
-      margin: [24, 26, 24, 0]
-    });
+    // Reserva, no fim do conteúdo, o espaço que o rodapé da última página
+    // sobe para caber o aviso de confidencialidade. Se não couber, a reserva
+    // desce para uma folha nova e o aviso vai junto — nunca por cima do texto.
+    conteudo.push({ text: ' ', fontSize: 1, margin: [0, SUBIDA_AVISO + 12, 0, 0] });
 
     return conteudo;
   }
