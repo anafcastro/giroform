@@ -60,10 +60,41 @@ window.GIRO = window.GIRO || {};
     return saida;
   }
 
-  /** Parágrafos separados por linha em branco; os separadores ficam como estão. */
+  // Fim de linha que encerra alguma coisa: frase, rótulo ("RELATO PM:") ou
+  // item de lista. Quebra depois disso é intencional e fica.
+  var FIM_DE_LINHA = /[.!?:;]["'”’)\]]*\s*$/;
+
+  /**
+   * Texto copiado de PDF (o B.O. chega assim) traz a quebra de cada linha do
+   * original, no meio da frase. No laudo justificado isso vira uma linha
+   * esticada seguida de duas palavras soltas. Linha que não termina em
+   * pontuação continua na seguinte, com um espaço no lugar da quebra.
+   */
+  function juntarLinhas(p) {
+    return p.split('\n').reduce(function (saida, linha) {
+      linha = linha.trim();
+      if (!linha) { return saida; }
+      if (!saida) { return linha; }
+      return saida + (FIM_DE_LINHA.test(saida) ? '\n' : ' ') + linha;
+    }, '')
+      // A mesma cópia separa palavras compostas: "evadiu- se", "GM/ CELTA".
+      .replace(/(\p{L})([-\/]) (?=\p{L})/gu, '$1$2')
+      // Digitado às pressas, falta o espaço depois da vírgula e do ponto:
+      // "solicitante,uma", "colisão.solicita". No ponto, só entre palavras
+      // de verdade, para não separar "b.o." nem "8.15242".
+      .replace(/(\p{L}),(?=\p{L})/gu, '$1, ')
+      .replace(/(\p{L}{3})\.(?=\p{L}{2})/gu, '$1. ');
+  }
+
+  /**
+   * Parágrafos separados por linha em branco; os separadores ficam como
+   * estão. Cada linha que sobra depois de juntar é tratada à parte, para um
+   * rótulo em caixa alta numa linha própria não depender da frase seguinte.
+   */
   function padronizar(texto) {
     return String(texto || '').replace(/\r/g, '').split(/(\n\s*\n)/).map(function (parte, i) {
-      return i % 2 ? parte : padronizarParagrafo(parte);
+      if (i % 2) { return parte; }
+      return juntarLinhas(parte).split('\n').map(padronizarParagrafo).join('\n');
     }).join('');
   }
 

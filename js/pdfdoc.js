@@ -171,6 +171,21 @@ window.GIRO = window.GIRO || {};
   var RECUO_PARAGRAFO = 24;   // entrada da primeira linha, como em texto corrido
   var ENTRELINHA = 1.45;
 
+  /**
+   * Palavra com hífen ou barra ("deslocou-se", "GM/CELTA") vai inteira.
+   * O pdfmake parte a palavra ali e, no justificado, reparte a sobra da
+   * linha entre os pedaços, o que abria um espaço falso no meio dela. O
+   * espaço que segue a palavra vai junto, para não virar um pedaço à parte.
+   */
+  var COMPOSTA = /(\S*[\p{L}\d][-\/][\p{L}\d]\S* *)/u;
+
+  function semCorteNaPalavra(texto) {
+    // split com grupo de captura: os pedaços ímpares são as compostas
+    return texto.split(COMPOSTA).map(function (pedaco, i) {
+      return i % 2 ? { text: pedaco, noWrap: true } : pedaco;
+    }).filter(function (pedaco) { return pedaco.text || pedaco; });
+  }
+
   function paragrafos(texto, opcoes) {
     var o = opcoes || {};
     // Todo texto corrido passa pela mesma regra de maiúsculas antes de virar
@@ -181,7 +196,7 @@ window.GIRO = window.GIRO || {};
     if (!blocos.length) { return [{ text: '', font: 'Carlito', fontSize: 10 }]; }
     return blocos.map(function (p) {
       return {
-        text: p.trim(),
+        text: semCorteNaPalavra(p.trim()),
         font: 'Carlito',
         fontSize: o.fontSize || 10.5,
         alignment: o.alignment || 'justify',
